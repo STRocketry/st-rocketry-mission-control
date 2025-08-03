@@ -1,0 +1,63 @@
+export interface TelemetryData {
+  time: number;           // Time since launch (ms)
+  altitude: number;       // Current altitude (m)
+  maxAltitude: number;    // Maximum achieved altitude (m)
+  temperature: number;    // Sensor temperature (°C)
+  voltage: number;        // Battery voltage (V)
+  accelX: number;         // Acceleration X-axis (g)
+  accelY: number;         // Acceleration Y-axis (g)
+  accelZ: number;         // Acceleration Z-axis (g)
+  statusFlags: number;    // Status bitmask
+}
+
+export interface FlightSession {
+  id: string;
+  startTime: Date;
+  endTime?: Date;
+  telemetryData: TelemetryData[];
+  maxAltitude: number;
+  flightDuration: number;
+  status: 'active' | 'completed' | 'error';
+}
+
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+
+export interface StatusFlags {
+  parachuteDeployed: boolean;   // 0b00000001 (1)
+  launchDetected: boolean;      // 0b00000010 (2)
+  lowVoltage: boolean;          // 0b00000100 (4)
+  criticalError: boolean;       // 0b10000000 (128)
+}
+
+export const parseStatusFlags = (flags: number): StatusFlags => ({
+  parachuteDeployed: !!(flags & 1),
+  launchDetected: !!(flags & 2),
+  lowVoltage: !!(flags & 4),
+  criticalError: !!(flags & 128)
+});
+
+export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
+  try {
+    const values = csvLine.trim().split(',').map(v => v.trim());
+    
+    if (values.length !== 9) {
+      console.warn('Invalid packet length:', values.length);
+      return null;
+    }
+
+    return {
+      time: parseInt(values[0]),
+      altitude: parseFloat(values[1]),
+      maxAltitude: parseFloat(values[2]),
+      temperature: parseFloat(values[3]),
+      voltage: parseFloat(values[4]),
+      accelX: parseFloat(values[5]),
+      accelY: parseFloat(values[6]),
+      accelZ: parseFloat(values[7]),
+      statusFlags: parseInt(values[8])
+    };
+  } catch (error) {
+    console.error('Error parsing telemetry packet:', error);
+    return null;
+  }
+};

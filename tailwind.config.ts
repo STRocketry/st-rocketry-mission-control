@@ -52,15 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				// Mission control theme colors
+				mission: {
+					success: 'hsl(var(--mission-success))',
+					warning: 'hsl(var(--mission-warning))',
+					critical: 'hsl(var(--mission-critical))',
+					info: 'hsl(var(--mission-info))',
+					neutral: 'hsl(var(--mission-neutral))'
 				}
 			},
 			borderRadius: {
@@ -88,7 +86,9 @@ export default {
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-data': 'pulse-data 2s infinite',
+				'scan-line': 'scan-line 3s infinite linear'
 			}
 		}
 	},
