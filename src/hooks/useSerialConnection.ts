@@ -7,6 +7,8 @@ export const useSerialConnection = () => {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
   const [currentData, setCurrentData] = useState<TelemetryData | null>(null);
+  const [rawData, setRawData] = useState<string[]>([]);
+  const [textMessages, setTextMessages] = useState<string[]>([]);
   
   const portRef = useRef<any>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
@@ -41,10 +43,20 @@ export const useSerialConnection = () => {
             
             for (const line of lines) {
               if (line.trim()) {
-                const data = parseTelemetryPacket(line);
-                if (data) {
-                  setCurrentData(data);
-                  setTelemetryData(prev => [...prev, data]);
+                // Store all raw data
+                setRawData(prev => [...prev, line.trim()]);
+                
+                // Check if it's a text message (contains letters)
+                if (/[a-zA-Z]/.test(line) && !line.includes(',')) {
+                  setTextMessages(prev => [...prev, line.trim()]);
+                  toast.info(`Flight Event: ${line.trim()}`);
+                } else {
+                  // Try to parse as telemetry data
+                  const data = parseTelemetryPacket(line);
+                  if (data) {
+                    setCurrentData(data);
+                    setTelemetryData(prev => [...prev, data]);
+                  }
                 }
               }
             }
@@ -98,6 +110,11 @@ export const useSerialConnection = () => {
   const clearData = useCallback(() => {
     setTelemetryData([]);
     setCurrentData(null);
+  }, []);
+
+  const clearRawData = useCallback(() => {
+    setRawData([]);
+    setTextMessages([]);
   }, []);
 
   const exportData = useCallback((format: 'csv' | 'json') => {
@@ -154,11 +171,14 @@ export const useSerialConnection = () => {
     connectionStatus,
     telemetryData,
     currentData,
+    rawData,
+    textMessages,
     maxAltitude,
     flightTime,
     handleConnect,
     handleDisconnect,
     clearData,
+    clearRawData,
     exportData
   };
 };

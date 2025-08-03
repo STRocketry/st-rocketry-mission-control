@@ -3,6 +3,7 @@ import { ConnectionPanel } from "@/components/telemetry/ConnectionPanel";
 import { TelemetryGauges } from "@/components/telemetry/TelemetryGauges";
 import { AltitudeChart } from "@/components/telemetry/AltitudeChart";
 import { StatusPanel } from "@/components/telemetry/StatusPanel";
+import { RawDataPanel } from "@/components/telemetry/RawDataPanel";
 import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
 import { Download, Trash2, FileText } from "lucide-react";
@@ -14,11 +15,14 @@ const Index = () => {
     connectionStatus,
     telemetryData,
     currentData,
+    rawData,
+    textMessages,
     maxAltitude,
     flightTime,
     handleConnect,
     handleDisconnect,
     clearData,
+    clearRawData,
     exportData
   } = useSerialConnection();
 
@@ -70,6 +74,14 @@ const Index = () => {
               data={telemetryData}
               maxAltitude={maxAltitude}
               isLive={isConnected && connectionStatus === 'connected'}
+            />
+
+            {/* Raw Data Panel */}
+            <RawDataPanel
+              rawData={rawData}
+              textMessages={textMessages}
+              isLive={isConnected && connectionStatus === 'connected'}
+              onClearData={clearRawData}
             />
           </div>
 
