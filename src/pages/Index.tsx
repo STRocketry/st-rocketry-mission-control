@@ -59,9 +59,9 @@ const Index = () => {
         </div>
 
         {/* Responsive Main Dashboard Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* Left Column - Charts and Gauges */}
-          <div className="xl:col-span-3 space-y-4 lg:space-y-6 order-2 xl:order-1">
+          <div className="lg:col-span-3 space-y-4 lg:space-y-6 order-2 lg:order-1">
             {/* Telemetry Gauges */}
             <TelemetryGauges 
               data={currentData} 
@@ -89,9 +89,9 @@ const Index = () => {
           </div>
 
           {/* Right Column - Status and Controls */}
-          <div className="xl:col-span-1 space-y-4 order-1 xl:order-2">
+          <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
             {/* Connection Panel - Compact */}
-            <div className="xl:block">
+            <div className="lg:block">
               <ConnectionPanel
                 onConnect={handleConnect}
                 onDisconnect={handleDisconnect}

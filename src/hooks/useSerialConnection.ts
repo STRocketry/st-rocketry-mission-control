@@ -61,6 +61,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       const altitude = altMatch ? altMatch[1] : 'unknown';
                       speakFunction(`Apogee detected at ${altitude} meters`);
                     }
+                    if (message.includes('parachute') && message.includes('deploy')) {
+                      speakFunction('Parachute deployed');
+                    }
                   }
                 } else {
                   // Try to parse as telemetry data
@@ -81,8 +84,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       setLastStatusFlags(data.statusFlags);
                     }
                     
-                    // Announce max altitude at end of flight
-                    if (speakFunction && !maxAltitudeAnnounced && data.altitude < data.maxAltitude * 0.5) {
+                    // Announce max altitude when descending significantly
+                    if (speakFunction && !maxAltitudeAnnounced && data.altitude < data.maxAltitude * 0.8 && data.maxAltitude > 10) {
                       speakFunction(`Maximum altitude ${data.maxAltitude.toFixed(0)} meters`);
                       setMaxAltitudeAnnounced(true);
                     }

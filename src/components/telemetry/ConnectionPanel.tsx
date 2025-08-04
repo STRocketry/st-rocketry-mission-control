@@ -107,14 +107,6 @@ export const ConnectionPanel = ({
         </div>
       </div>
       
-      {connectionStatus === 'disconnected' && (
-        <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
-          <p className="text-xs lg:text-sm text-muted-foreground">
-            Click CONNECT to establish USB connection with your rocket's telemetry system.
-            Make sure your rocket is powered on and connected via USB.
-          </p>
-        </div>
-      )}
     </Card>
   );
 };
