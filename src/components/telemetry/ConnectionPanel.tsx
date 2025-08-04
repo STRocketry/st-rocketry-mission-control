@@ -73,17 +73,17 @@ export const ConnectionPanel = ({
   };
 
   return (
-    <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <Card className="p-3 lg:p-4 bg-card/50 backdrop-blur-sm border-primary/20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 lg:gap-4">
           <div className="flex items-center gap-2">
-            <Rocket className="h-6 w-6 text-primary" />
-            <h2 className="text-xl font-bold">ROCKET TELEMETRY</h2>
+            <Rocket className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
+            <h2 className="text-base lg:text-lg font-bold">CONNECTION</h2>
           </div>
           {getStatusBadge()}
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
           {getStatusIcon()}
           
           {!isConnected ? (
@@ -91,7 +91,7 @@ export const ConnectionPanel = ({
               variant="mission"
               onClick={handleConnect}
               disabled={isRequestingPort}
-              className="min-w-[120px]"
+              className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm"
             >
               {isRequestingPort ? "Requesting..." : "CONNECT"}
             </MissionButton>
@@ -99,7 +99,7 @@ export const ConnectionPanel = ({
             <MissionButton
               variant="destructive"
               onClick={onDisconnect}
-              className="min-w-[120px]"
+              className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm"
             >
               DISCONNECT
             </MissionButton>
@@ -108,8 +108,8 @@ export const ConnectionPanel = ({
       </div>
       
       {connectionStatus === 'disconnected' && (
-        <div className="mt-4 p-4 rounded-md bg-muted/50 border border-border">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-3 p-3 rounded-md bg-muted/50 border border-border">
+          <p className="text-xs lg:text-sm text-muted-foreground">
             Click CONNECT to establish USB connection with your rocket's telemetry system.
             Make sure your rocket is powered on and connected via USB.
           </p>

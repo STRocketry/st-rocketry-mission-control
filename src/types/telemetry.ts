@@ -23,17 +23,19 @@ export interface FlightSession {
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface StatusFlags {
-  parachuteDeployed: boolean;   // 0b00000001 (1)
-  launchDetected: boolean;      // 0b00000010 (2)
-  lowVoltage: boolean;          // 0b00000100 (4)
-  criticalError: boolean;       // 0b10000000 (128)
+  servoOpen: boolean;           // 0b00000001 (1) - Servo position
+  launchDetected: boolean;      // 0b00000010 (2) - Launch detected
+  hatchOpen: boolean;           // 0b00000100 (4) - Hatch status
+  parachuteDeployed: boolean;   // 0b00001000 (8) - Parachute deployed
+  criticalError: boolean;       // 0b10000000 (128) - Critical error
 }
 
 export const parseStatusFlags = (flags: number): StatusFlags => ({
-  parachuteDeployed: !!(flags & 1),
-  launchDetected: !!(flags & 2),
-  lowVoltage: !!(flags & 4),
-  criticalError: !!(flags & 128)
+  servoOpen: !!(flags & 1),          // 0b00000001 (1) - Servo position (0=closed, 1=open)
+  launchDetected: !!(flags & 2),     // 0b00000010 (2) - Launch detected (1=launched)
+  hatchOpen: !!(flags & 4),          // 0b00000100 (4) - Hatch status (0=closed, 1=open)
+  parachuteDeployed: !!(flags & 8),  // 0b00001000 (8) - Parachute deployed (1=deployed)
+  criticalError: !!(flags & 128)     // 0b10000000 (128) - Critical error
 });
 
 export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {

@@ -1,14 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { TelemetryData, ConnectionStatus, parseTelemetryPacket } from '@/types/telemetry';
+import { TelemetryData, ConnectionStatus, parseTelemetryPacket, parseStatusFlags } from '@/types/telemetry';
 import { toast } from 'sonner';
 
-export const useSerialConnection = () => {
+export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
   const [currentData, setCurrentData] = useState<TelemetryData | null>(null);
   const [rawData, setRawData] = useState<string[]>([]);
   const [textMessages, setTextMessages] = useState<string[]>([]);
+  const [lastStatusFlags, setLastStatusFlags] = useState<number>(0);
+  const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   
   const portRef = useRef<any>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
@@ -50,12 +52,40 @@ export const useSerialConnection = () => {
                 if (/[a-zA-Z]/.test(line) && !line.includes(',')) {
                   setTextMessages(prev => [...prev, line.trim()]);
                   toast.info(`Flight Event: ${line.trim()}`);
+                  
+                  // Voice alerts for specific events
+                  if (speakFunction) {
+                    const message = line.trim().toLowerCase();
+                    if (message.includes('apogee')) {
+                      const altMatch = message.match(/(\d+\.?\d*)/);
+                      const altitude = altMatch ? altMatch[1] : 'unknown';
+                      speakFunction(`Apogee detected at ${altitude} meters`);
+                    }
+                  }
                 } else {
                   // Try to parse as telemetry data
                   const data = parseTelemetryPacket(line);
                   if (data) {
                     setCurrentData(data);
                     setTelemetryData(prev => [...prev, data]);
+                    
+                    // Voice alerts for status changes
+                    if (speakFunction && data.statusFlags !== lastStatusFlags) {
+                      const currentFlags = parseStatusFlags(data.statusFlags);
+                      const lastFlags = parseStatusFlags(lastStatusFlags);
+                      
+                      if (currentFlags.parachuteDeployed && !lastFlags.parachuteDeployed) {
+                        speakFunction("Parachute deployed");
+                      }
+                      
+                      setLastStatusFlags(data.statusFlags);
+                    }
+                    
+                    // Announce max altitude at end of flight
+                    if (speakFunction && !maxAltitudeAnnounced && data.altitude < data.maxAltitude * 0.5) {
+                      speakFunction(`Maximum altitude ${data.maxAltitude.toFixed(0)} meters`);
+                      setMaxAltitudeAnnounced(true);
+                    }
                   }
                 }
               }

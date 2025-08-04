@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TelemetryData } from "@/types/telemetry";
+import { TelemetryData, parseStatusFlags } from "@/types/telemetry";
 import { 
   Rocket, 
   Umbrella, 
@@ -20,13 +20,14 @@ interface StatusPanelProps {
 export const StatusPanel = ({ data, isLive, flightTime, dataPoints }: StatusPanelProps) => {
   const getFlightPhase = (statusFlags: number) => {
     if (statusFlags & 128) return { phase: "CRITICAL ERROR", color: "text-mission-critical", icon: AlertTriangle };
-    if (statusFlags & 1) return { phase: "RECOVERY", color: "text-mission-success", icon: Umbrella };
+    if (statusFlags & 8) return { phase: "RECOVERY", color: "text-mission-success", icon: Umbrella };
     if (statusFlags & 2) return { phase: "POWERED FLIGHT", color: "text-mission-warning", icon: Rocket };
     return { phase: "STANDBY", color: "text-mission-neutral", icon: CheckCircle };
   };
 
   const flightPhase = data ? getFlightPhase(data.statusFlags) : null;
   const IconComponent = flightPhase?.icon || CheckCircle;
+  const flags = data ? parseStatusFlags(data.statusFlags) : null;
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
@@ -35,13 +36,15 @@ export const StatusPanel = ({ data, isLive, flightTime, dataPoints }: StatusPane
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getStatusFlags = (flags: number) => {
-    const statuses = [];
-    if (flags & 1) statuses.push({ text: "PARACHUTE DEPLOYED", color: "bg-mission-success" });
-    if (flags & 2) statuses.push({ text: "LAUNCH DETECTED", color: "bg-mission-warning" });
-    if (flags & 4) statuses.push({ text: "LOW VOLTAGE", color: "bg-mission-warning" });
-    if (flags & 128) statuses.push({ text: "CRITICAL ERROR", color: "bg-mission-critical" });
-    return statuses;
+  const getStatusItems = (flags: any) => {
+    if (!flags) return [];
+    const items = [];
+    if (flags.servoOpen) items.push({ text: "SERVO OPEN", color: "bg-mission-info" });
+    if (flags.launchDetected) items.push({ text: "LAUNCH DETECTED", color: "bg-mission-warning" });
+    if (flags.hatchOpen) items.push({ text: "HATCH OPEN", color: "bg-mission-info" });
+    if (flags.parachuteDeployed) items.push({ text: "PARACHUTE DEPLOYED", color: "bg-mission-success" });
+    if (flags.criticalError) items.push({ text: "CRITICAL ERROR", color: "bg-mission-critical" });
+    return items;
   };
 
   return (
@@ -88,21 +91,41 @@ export const StatusPanel = ({ data, isLive, flightTime, dataPoints }: StatusPane
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
         <h3 className="text-lg font-bold mb-4">SYSTEM STATUS</h3>
         
-        <div className="space-y-3">
-          {data && getStatusFlags(data.statusFlags).map((status, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Badge className={status.color}>
-                {status.text}
-              </Badge>
-            </div>
-          ))}
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Servo:</span>
+            <Badge variant={flags?.servoOpen ? "default" : "secondary"}>
+              {flags?.servoOpen ? "OPEN" : "CLOSED"}
+            </Badge>
+          </div>
           
-          {(!data || getStatusFlags(data.statusFlags).length === 0) && (
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-mission-success" />
-              <span className="text-sm">All systems nominal</span>
-            </div>
-          )}
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Launch:</span>
+            <Badge variant={flags?.launchDetected ? "default" : "secondary"}>
+              {flags?.launchDetected ? "DETECTED" : "STANDBY"}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Hatch:</span>
+            <Badge variant={flags?.hatchOpen ? "default" : "secondary"}>
+              {flags?.hatchOpen ? "OPEN" : "CLOSED"}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Parachute:</span>
+            <Badge variant={flags?.parachuteDeployed ? "default" : "secondary"}>
+              {flags?.parachuteDeployed ? "DEPLOYED" : "STOWED"}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">System:</span>
+            <Badge variant={flags?.criticalError ? "destructive" : "default"}>
+              {flags?.criticalError ? "ERROR" : "NORMAL"}
+            </Badge>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">
