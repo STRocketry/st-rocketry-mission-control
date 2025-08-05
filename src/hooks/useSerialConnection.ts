@@ -21,16 +21,28 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     try {
       setConnectionStatus('connecting');
       
-      // Open the port first
-      await port.open({ baudRate: 115200 });
+      // Check if port is already open, if not open it
+      if (!port.readable) {
+        await port.open({ 
+          baudRate: 115200,
+          dataBits: 8,
+          stopBits: 1,
+          parity: 'none'
+        });
+      }
+      
       portRef.current = port;
       
+      // Wait a bit to ensure port is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Start reading data
-      const reader = port.readable!.getReader();
+      const reader = port.readable.getReader();
       readerRef.current = reader;
       
       setIsConnected(true);
       setConnectionStatus('connected');
+      toast.success('Serial port connected successfully!');
       
       // Voice announcement for connection
       if (speakFunction) {
@@ -40,9 +52,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       // Read loop
       const readLoop = async () => {
         try {
-          while (true) {
+          while (isConnected || connectionStatus === 'connected') {
             const { value, done } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log('Reader done, breaking loop');
+              break;
+            }
             
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
@@ -124,13 +139,16 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
           }
         } catch (error) {
           console.error('Read error:', error);
-          setConnectionStatus('error');
-          setIsConnected(false);
-          toast.error('Connection lost. Please reconnect.');
-          
-          // Voice announcement for disconnection
-          if (speakFunction) {
-            speakFunction('Serial port disconnected');
+          // Only disconnect if we're still supposed to be connected
+          if (isConnected) {
+            setConnectionStatus('error');
+            setIsConnected(false);
+            toast.error('Connection lost. Please reconnect.');
+            
+            // Voice announcement for disconnection
+            if (speakFunction) {
+              speakFunction('Serial port disconnected');
+            }
           }
         }
       };
@@ -141,14 +159,14 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       console.error('Connection error:', error);
       setConnectionStatus('error');
       setIsConnected(false);
-      toast.error('Failed to establish connection');
+      toast.error(`Failed to establish connection: ${error.message}`);
       
       // Voice announcement for connection failure
       if (speakFunction) {
-        speakFunction('Serial port disconnected');
+        speakFunction('Connection failed');
       }
     }
-  }, [speakFunction]);
+  }, [speakFunction, isConnected, connectionStatus, currentData, lastStatusFlags, maxAltitudeAnnounced]);
 
   const handleDisconnect = useCallback(async () => {
     try {
