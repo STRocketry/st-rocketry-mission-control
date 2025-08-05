@@ -45,9 +45,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Start reading data
-      console.log('Getting reader from port...');
       const reader = port.readable.getReader();
-      console.log('Reader obtained:', !!reader);
       readerRef.current = reader;
       
       // Read loop
@@ -58,11 +56,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
           setConnectionStatus('connected');
           toast.success('Serial port connected successfully!');
           
-          console.log('Starting read loop...');
           while (true) {
-            console.log('Waiting for data...');
             const { value, done } = await reader.read();
-            console.log('Read result:', { done, hasValue: !!value, valueLength: value?.length });
             if (done) {
               console.log('Reader done, breaking loop');
               break;
@@ -70,7 +65,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
-            console.log('Received raw data:', value, 'Decoded text:', text);
+            
+            // Skip if we're getting arrays of zeros (no actual data)
+            if (value && value.every(byte => byte === 0)) {
+              continue;
+            }
+            
             bufferRef.current += text;
             
             // Process complete lines
