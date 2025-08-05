@@ -20,6 +20,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const handleConnect = useCallback(async (port: any) => {
     try {
       setConnectionStatus('connecting');
+      
+      // Open the port first
+      await port.open({ baudRate: 115200 });
       portRef.current = port;
       
       // Start reading data
@@ -122,7 +125,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
         } catch (error) {
           console.error('Read error:', error);
           setConnectionStatus('error');
+          setIsConnected(false);
           toast.error('Connection lost. Please reconnect.');
+          
+          // Voice announcement for disconnection
+          if (speakFunction) {
+            speakFunction('Serial port disconnected');
+          }
         }
       };
       
@@ -131,9 +140,15 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     } catch (error) {
       console.error('Connection error:', error);
       setConnectionStatus('error');
+      setIsConnected(false);
       toast.error('Failed to establish connection');
+      
+      // Voice announcement for connection failure
+      if (speakFunction) {
+        speakFunction('Serial port disconnected');
+      }
     }
-  }, []);
+  }, [speakFunction]);
 
   const handleDisconnect = useCallback(async () => {
     try {

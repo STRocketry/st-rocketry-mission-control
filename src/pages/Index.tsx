@@ -93,14 +93,6 @@ const Index = () => {
               />
             </div>
 
-            {/* Voice Alerts - Bottom of left column */}
-            <div className="hidden lg:block">
-              <VoiceAlerts
-                onSpeak={(speakFn) => {
-                  speakFunctionRef.current = speakFn;
-                }}
-              />
-            </div>
           </div>
 
           {/* Right Column - Status and Controls */}
@@ -127,6 +119,15 @@ const Index = () => {
               isConnected={isConnected && connectionStatus === 'connected'}
               onDeploy={emergencyDeploy}
             />
+
+            {/* Voice Alerts - Bottom of right column */}
+            <div className="hidden lg:block">
+              <VoiceAlerts
+                onSpeak={(speakFn) => {
+                  speakFunctionRef.current = speakFn;
+                }}
+              />
+            </div>
 
             {/* Data Export Controls */}
             <div className="space-y-3">
