@@ -71,12 +71,19 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
             
-            // Debug: Log what we're actually receiving
-            console.log('Raw bytes:', Array.from(value || []));
-            console.log('Decoded text:', JSON.stringify(text));
-            console.log('Text length:', text.length);
+            // Skip null bytes and empty data - only process actual text
+            if (!value || value.every(byte => byte === 0 || byte === 32)) {
+              console.log('Skipping null/empty data');
+              continue;
+            }
             
-            bufferRef.current += text;
+            // Only process if we have meaningful text (contains digits and commas for CSV)
+            if (text && text.trim() && /[\d,]/.test(text)) {
+              console.log('Processing valid data:', JSON.stringify(text));
+              bufferRef.current += text;
+            } else {
+              console.log('Skipping invalid data:', JSON.stringify(text));
+            }
             
             // Process complete lines
             const lines = bufferRef.current.split('\n');
