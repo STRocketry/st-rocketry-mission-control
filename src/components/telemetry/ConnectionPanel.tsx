@@ -106,7 +106,6 @@ export const ConnectionPanel = ({
           )}
         </div>
       </div>
-      
     </Card>
   );
 };

@@ -108,7 +108,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
-  }, []);
+  }, [speakFunction, lastStatusFlags, maxAltitudeAnnounced]);
 
   const handleDisconnect = useCallback(async () => {
     try {

@@ -118,7 +118,7 @@ const Index = () => {
             <div className="space-y-3">
               <h3 className="text-base lg:text-lg font-bold">DATA EXPORT</h3>
               
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 gap-2">
                 <MissionButton
                   variant="outline"
                   onClick={() => exportData('csv')}
