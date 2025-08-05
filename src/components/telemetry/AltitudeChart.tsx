@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TelemetryData } from "@/types/telemetry";
+import { TelemetryData, FlightEvent } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
 
 interface AltitudeChartProps {
   data: TelemetryData[];
+  events?: FlightEvent[];
   maxAltitude: number;
   isLive: boolean;
 }

@@ -10,6 +10,13 @@ export interface TelemetryData {
   statusFlags: number;    // Status bitmask
 }
 
+export interface FlightEvent {
+  time: number;
+  altitude: number;
+  event: string;
+  description: string;
+}
+
 export interface FlightSession {
   id: string;
   startTime: Date;

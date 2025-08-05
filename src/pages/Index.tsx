@@ -6,6 +6,7 @@ import { StatusPanel } from "@/components/telemetry/StatusPanel";
 import { RawDataPanel } from "@/components/telemetry/RawDataPanel";
 import { DateTimeDisplay } from "@/components/ui/date-time-display";
 import { VoiceAlerts } from "@/components/ui/voice-alerts";
+import { EmergencyDeploy } from "@/components/ui/emergency-deploy";
 import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
 import { Download, Trash2 } from "lucide-react";
@@ -21,10 +22,12 @@ const Index = () => {
     currentData,
     rawData,
     textMessages,
+    flightEvents,
     maxAltitude,
     flightTime,
     handleConnect,
     handleDisconnect,
+    emergencyDeploy,
     clearData,
     clearRawData,
     exportData
@@ -46,22 +49,24 @@ const Index = () => {
       
       <div className="relative z-10 p-3 lg:p-6 space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="text-center mb-4 lg:mb-8">
-          <h1 className="text-2xl lg:text-4xl font-bold text-primary mb-2">
-            ST ROCKETRY MISSION CONTROL
-          </h1>
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-4">
+        <div className="flex justify-between items-start mb-4 lg:mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-2xl lg:text-4xl font-bold text-primary mb-2">
+              ST ROCKETRY MISSION CONTROL
+            </h1>
             <p className="text-sm lg:text-base text-muted-foreground">
               Real-time rocket telemetry monitoring and data acquisition system
             </p>
+          </div>
+          <div className="flex-shrink-0">
             <DateTimeDisplay />
           </div>
         </div>
 
         {/* Responsive Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
           {/* Left Column - Charts and Gauges */}
-          <div className="lg:col-span-3 space-y-4 lg:space-y-6 order-2 lg:order-1">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-4 lg:space-y-6 order-2 lg:order-1">
             {/* Telemetry Gauges */}
             <TelemetryGauges 
               data={currentData} 
@@ -72,6 +77,7 @@ const Index = () => {
             <div className="w-full">
               <AltitudeChart
                 data={telemetryData}
+                events={flightEvents}
                 maxAltitude={maxAltitude}
                 isLive={isConnected && connectionStatus === 'connected'}
               />
@@ -86,10 +92,19 @@ const Index = () => {
                 onClearData={clearRawData}
               />
             </div>
+
+            {/* Voice Alerts - Bottom of left column */}
+            <div className="hidden lg:block">
+              <VoiceAlerts
+                onSpeak={(speakFn) => {
+                  speakFunctionRef.current = speakFn;
+                }}
+              />
+            </div>
           </div>
 
           {/* Right Column - Status and Controls */}
-          <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
+          <div className="lg:col-span-1 xl:col-span-1 space-y-4 order-1 lg:order-2">
             {/* Connection Panel - Compact */}
             <div className="lg:block">
               <ConnectionPanel
@@ -107,11 +122,10 @@ const Index = () => {
               dataPoints={telemetryData.length}
             />
 
-            {/* Voice Alerts */}
-            <VoiceAlerts
-              onSpeak={(speakFn) => {
-                speakFunctionRef.current = speakFn;
-              }}
+            {/* Emergency Deploy */}
+            <EmergencyDeploy
+              isConnected={isConnected && connectionStatus === 'connected'}
+              onDeploy={emergencyDeploy}
             />
 
             {/* Data Export Controls */}
@@ -150,6 +164,15 @@ const Index = () => {
             textMessages={textMessages}
             isLive={isConnected && connectionStatus === 'connected'}
             onClearData={clearRawData}
+          />
+        </div>
+
+        {/* Voice Alerts - Mobile Only */}
+        <div className="lg:hidden">
+          <VoiceAlerts
+            onSpeak={(speakFn) => {
+              speakFunctionRef.current = speakFn;
+            }}
           />
         </div>
 
