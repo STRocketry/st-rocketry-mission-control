@@ -66,10 +66,10 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
             
-            // Skip if we're getting arrays of zeros (no actual data)
-            if (value && value.every(byte => byte === 0)) {
-              continue;
-            }
+            // Debug: Log what we're actually receiving
+            console.log('Raw bytes:', Array.from(value || []));
+            console.log('Decoded text:', JSON.stringify(text));
+            console.log('Text length:', text.length);
             
             bufferRef.current += text;
             
