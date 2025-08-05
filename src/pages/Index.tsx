@@ -9,7 +9,7 @@ import { VoiceAlerts } from "@/components/ui/voice-alerts";
 import { EmergencyDeploy } from "@/components/ui/emergency-deploy";
 import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 const Index = () => {
   const speakFunctionRef = useRef<((text: string) => void) | null>(null);
@@ -46,7 +46,8 @@ const Index = () => {
         {/* Header */}
         <div className="flex justify-between items-start mb-4 lg:mb-8">
           <div className="text-center flex-1">
-            <h1 className="text-2xl lg:text-4xl font-bold text-primary mb-2">
+            <h1 className="text-2xl lg:text-4xl font-bold text-primary mb-2 flex items-center justify-center gap-3">
+              <Rocket className="h-6 w-6 lg:h-8 lg:w-8" />
               ST ROCKETRY MISSION CONTROL
             </h1>
             
