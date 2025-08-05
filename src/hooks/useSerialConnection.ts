@@ -48,11 +48,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
           setConnectionStatus('connected');
           toast.success('Serial port connected successfully!');
           
-          // Voice announcement for connection
-          if (speakFunction) {
-            speakFunction('Serial port connected');
-          }
-          
           while (true) {
             const { value, done } = await reader.read();
             if (done) {
