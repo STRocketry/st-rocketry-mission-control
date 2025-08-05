@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { MissionButton } from "@/components/ui/mission-button";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 interface ConnectionPanelProps {
   onConnect: (port: any) => void;
@@ -67,10 +67,6 @@ export const ConnectionPanel = ({
   return <Card className="p-3 lg:p-4 bg-card/50 backdrop-blur-sm border-primary/20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="flex items-center gap-2 lg:gap-4">
-          <div className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
-            
-          </div>
           {getStatusBadge()}
         </div>
         

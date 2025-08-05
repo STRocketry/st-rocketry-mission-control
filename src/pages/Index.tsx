@@ -8,7 +8,7 @@ import { DateTimeDisplay } from "@/components/ui/date-time-display";
 import { VoiceAlerts } from "@/components/ui/voice-alerts";
 import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 const Index = () => {
   const speakFunctionRef = useRef<((text: string) => void) | null>(null);
@@ -41,12 +41,16 @@ const Index = () => {
       
       <div className="relative z-10 p-3 lg:p-6 space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="text-center mb-4 lg:mb-8">
-          <h1 className="text-2xl lg:text-4xl font-bold text-primary mb-2">
-            ST ROCKETRY MISSION CONTROL
-          </h1>
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-4">
-            
+        <div className="relative mb-4 lg:mb-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Rocket className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
+              <h1 className="text-2xl lg:text-4xl font-bold text-primary">
+                ST ROCKETRY MISSION CONTROL
+              </h1>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0">
             <DateTimeDisplay />
           </div>
         </div>
@@ -67,6 +71,13 @@ const Index = () => {
             <div className="hidden lg:block">
               <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
             </div>
+
+            {/* Voice Alerts - Bottom of left column */}
+            <div className="hidden lg:block">
+              <VoiceAlerts onSpeak={speakFn => {
+                speakFunctionRef.current = speakFn;
+              }} />
+            </div>
           </div>
 
           {/* Right Column - Status and Controls */}
@@ -77,11 +88,6 @@ const Index = () => {
             </div>
 
             <StatusPanel data={currentData} isLive={isConnected && connectionStatus === 'connected'} flightTime={flightTime} dataPoints={telemetryData.length} />
-
-            {/* Voice Alerts */}
-            <VoiceAlerts onSpeak={speakFn => {
-            speakFunctionRef.current = speakFn;
-          }} />
 
             {/* Data Export Controls */}
             <div className="space-y-3">
@@ -105,6 +111,13 @@ const Index = () => {
         {/* Raw Data Panel - Mobile Only */}
         <div className="lg:hidden">
           <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
+        </div>
+
+        {/* Voice Alerts - Mobile Only */}
+        <div className="lg:hidden">
+          <VoiceAlerts onSpeak={speakFn => {
+            speakFunctionRef.current = speakFn;
+          }} />
         </div>
 
         {/* Footer */}
