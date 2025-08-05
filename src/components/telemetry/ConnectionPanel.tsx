@@ -29,15 +29,7 @@ export const ConnectionPanel = ({
     setIsRequestingPort(true);
     try {
       const port = await (navigator as any).serial.requestPort();
-      await port.open({ 
-        baudRate: 9600,
-        dataBits: 8,
-        stopBits: 1,
-        parity: 'none'
-      });
-      
       onConnect(port);
-      toast.success("Rocket telemetry connected successfully!");
     } catch (error) {
       console.error("Connection failed:", error);
       toast.error("Failed to connect to rocket. Please check your connection.");
