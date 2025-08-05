@@ -89,7 +89,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     }]);
                   }
                   
-                  // Voice alerts for specific events
+                  // Voice alerts for specific events - TEMPORARILY DISABLED
+                  /*
                   if (speakFunction) {
                     const message = line.trim().toLowerCase();
                     if (message.includes('apogee')) {
@@ -104,6 +105,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       speakFunction('Servo action completed');
                     }
                   }
+                  */
                 } else {
                   // Try to parse as telemetry data
                   const data = parseTelemetryPacket(line);
@@ -111,7 +113,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     setCurrentData(data);
                     setTelemetryData(prev => [...prev, data]);
                     
-                    // Voice alerts for status changes
+                    // Voice alerts for status changes - TEMPORARILY DISABLED
+                    /*
                     if (speakFunction && data.statusFlags !== lastStatusFlags) {
                       const currentFlags = parseStatusFlags(data.statusFlags);
                       const lastFlags = parseStatusFlags(lastStatusFlags);
@@ -122,12 +125,15 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       
                       setLastStatusFlags(data.statusFlags);
                     }
+                    */
                     
-                    // Announce max altitude when descending significantly
+                    // Announce max altitude when descending significantly - TEMPORARILY DISABLED
+                    /*
                     if (speakFunction && !maxAltitudeAnnounced && data.altitude < data.maxAltitude * 0.8 && data.maxAltitude > 10) {
                       speakFunction(`Maximum altitude ${data.maxAltitude.toFixed(0)} meters`);
                       setMaxAltitudeAnnounced(true);
                     }
+                    */
                   }
                 }
               }
@@ -141,10 +147,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             setIsConnected(false);
             toast.error('Connection lost. Please reconnect.');
             
-            // Voice announcement for disconnection
+            // Voice announcement for disconnection - TEMPORARILY DISABLED
+            /*
             if (speakFunction) {
               speakFunction('Serial port disconnected');
             }
+            */
           }
         }
       };
@@ -157,10 +165,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setIsConnected(false);
       toast.error(`Failed to establish connection: ${error.message}`);
       
-      // Voice announcement for connection failure
+      // Voice announcement for connection failure - TEMPORARILY DISABLED
+      /*
       if (speakFunction) {
         speakFunction('Connection failed');
       }
+      */
     }
   }, [speakFunction]);
 
@@ -180,10 +190,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('disconnected');
       bufferRef.current = '';
       
-      // Voice announcement for disconnection
+      // Voice announcement for disconnection - TEMPORARILY DISABLED
+      /*
       if (speakFunction) {
         speakFunction('Serial port disconnected');
       }
+      */
       
       toast.success('Disconnected successfully');
     } catch (error) {
