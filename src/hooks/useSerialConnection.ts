@@ -16,9 +16,17 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const portRef = useRef<any>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const bufferRef = useRef<string>('');
+  const isConnectingRef = useRef<boolean>(false);
 
   const handleConnect = useCallback(async (port: any) => {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnectingRef.current || isConnected) {
+      console.log('Connection already in progress or already connected');
+      return;
+    }
+    
     try {
+      isConnectingRef.current = true;
       setConnectionStatus('connecting');
       
       // Check if port is already open, if not open it
@@ -171,6 +179,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
         speakFunction('Connection failed');
       }
       */
+    } finally {
+      isConnectingRef.current = false;
     }
   }, [speakFunction]);
 
@@ -245,12 +255,20 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     }
   }, [isConnected, currentData]);
 
-  // Clean up on unmount
+  // Clean up on unmount - prevent memory leaks
   useEffect(() => {
     return () => {
-      handleDisconnect();
+      // Use a flag to prevent state updates after unmount
+      if (readerRef.current) {
+        readerRef.current.cancel().catch(() => {});
+        readerRef.current = null;
+      }
+      if (portRef.current && portRef.current.readable) {
+        portRef.current.close().catch(() => {});
+        portRef.current = null;
+      }
     };
-  }, [handleDisconnect]);
+  }, []);
 
   const clearData = useCallback(() => {
     setTelemetryData([]);
