@@ -52,7 +52,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       // Read loop
       const readLoop = async () => {
         try {
-          while (isConnected || connectionStatus === 'connected') {
+          while (true) {
             const { value, done } = await reader.read();
             if (done) {
               console.log('Reader done, breaking loop');
