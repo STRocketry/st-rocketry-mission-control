@@ -56,8 +56,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
           setConnectionStatus('connected');
           toast.success('Serial port connected successfully!');
           
+          console.log('SERIAL CONNECTION: Starting read loop...');
+          let readCount = 0;
           while (true) {
+            readCount++;
+            console.log(`SERIAL: Read attempt #${readCount}`);
             const { value, done } = await reader.read();
+            console.log(`SERIAL: Read completed #${readCount}:`, { done, hasValue: !!value });
             if (done) {
               console.log('Reader done, breaking loop');
               break;
