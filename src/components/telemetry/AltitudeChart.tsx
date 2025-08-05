@@ -2,18 +2,17 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TelemetryData, FlightEvent } from "@/types/telemetry";
+import { TelemetryData } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
 
 interface AltitudeChartProps {
   data: TelemetryData[];
-  events?: FlightEvent[];
   maxAltitude: number;
   isLive: boolean;
 }
 
-export const AltitudeChart = ({ data, events = [], maxAltitude, isLive }: AltitudeChartProps) => {
+export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<any>(null);
 
@@ -22,14 +21,6 @@ export const AltitudeChart = ({ data, events = [], maxAltitude, isLive }: Altitu
     altitude: d.altitude,
     maxAltitude: d.maxAltitude,
     accelY: d.accelY
-  }));
-
-  // Create event markers for the chart
-  const eventMarkers = events.map(event => ({
-    time: event.time / 1000, // Convert to seconds
-    altitude: event.altitude,
-    event: event.event,
-    description: event.description
   }));
 
   const apogee = data.reduce((max, current) => 
@@ -172,30 +163,6 @@ export const AltitudeChart = ({ data, events = [], maxAltitude, isLive }: Altitu
                 }}
               />
             )}
-            
-            {/* Event markers */}
-            {eventMarkers.map((event, index) => (
-              <ReferenceLine
-                key={index}
-                yAxisId="altitude"
-                x={event.time}
-                stroke={
-                  event.event === 'APOGEE_DETECTED' ? '#ff4444' :
-                  event.event === 'PARACHUTE_EVENT' ? '#44ff44' :
-                  event.event === 'SERVO_ACTION' ? '#4444ff' :
-                  event.event === 'EMERGENCY_DEPLOY' ? '#ff8800' :
-                  '#888888'
-                }
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                label={{
-                  value: event.event.replace('_', ' '),
-                  position: 'insideTopRight',
-                  fontSize: 10,
-                  fill: 'hsl(var(--foreground))'
-                }}
-              />
-            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
