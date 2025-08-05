@@ -4,38 +4,33 @@ import { MissionButton } from "@/components/ui/mission-button";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-
 interface ConnectionPanelProps {
   onConnect: (port: any) => void;
   onDisconnect: () => void;
   isConnected: boolean;
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
 }
-
-export const ConnectionPanel = ({ 
-  onConnect, 
-  onDisconnect, 
-  isConnected, 
-  connectionStatus 
+export const ConnectionPanel = ({
+  onConnect,
+  onDisconnect,
+  isConnected,
+  connectionStatus
 }: ConnectionPanelProps) => {
   const [isRequestingPort, setIsRequestingPort] = useState(false);
-
   const handleConnect = useCallback(async () => {
     if (!('serial' in navigator)) {
       toast.error("WebSerial API not supported. Please use Chrome or Edge browser.");
       return;
     }
-
     setIsRequestingPort(true);
     try {
       const port = await (navigator as any).serial.requestPort();
-      await port.open({ 
+      await port.open({
         baudRate: 9600,
         dataBits: 8,
         stopBits: 1,
         parity: 'none'
       });
-      
       onConnect(port);
       toast.success("Rocket telemetry connected successfully!");
     } catch (error) {
@@ -45,7 +40,6 @@ export const ConnectionPanel = ({
       setIsRequestingPort(false);
     }
   }, [onConnect]);
-
   const getStatusBadge = () => {
     switch (connectionStatus) {
       case 'connected':
@@ -58,7 +52,6 @@ export const ConnectionPanel = ({
         return <Badge variant="secondary">OFFLINE</Badge>;
     }
   };
-
   const getStatusIcon = () => {
     switch (connectionStatus) {
       case 'connected':
@@ -71,14 +64,12 @@ export const ConnectionPanel = ({
         return <WifiOff className="h-5 w-5 text-muted-foreground" />;
     }
   };
-
-  return (
-    <Card className="p-3 lg:p-4 bg-card/50 backdrop-blur-sm border-primary/20">
+  return <Card className="p-3 lg:p-4 bg-card/50 backdrop-blur-sm border-primary/20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="flex items-center gap-2 lg:gap-4">
           <div className="flex items-center gap-2">
             <Rocket className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
-            <h2 className="text-base lg:text-lg font-bold">CONNECTION</h2>
+            
           </div>
           {getStatusBadge()}
         </div>
@@ -86,26 +77,12 @@ export const ConnectionPanel = ({
         <div className="flex items-center gap-2 lg:gap-4">
           {getStatusIcon()}
           
-          {!isConnected ? (
-            <MissionButton
-              variant="mission"
-              onClick={handleConnect}
-              disabled={isRequestingPort}
-              className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm"
-            >
+          {!isConnected ? <MissionButton variant="mission" onClick={handleConnect} disabled={isRequestingPort} className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm">
               {isRequestingPort ? "Requesting..." : "CONNECT"}
-            </MissionButton>
-          ) : (
-            <MissionButton
-              variant="destructive"
-              onClick={onDisconnect}
-              className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm"
-            >
+            </MissionButton> : <MissionButton variant="destructive" onClick={onDisconnect} className="min-w-[100px] lg:min-w-[120px] text-xs lg:text-sm">
               DISCONNECT
-            </MissionButton>
-          )}
+            </MissionButton>}
         </div>
       </div>
-    </Card>
-  );
+    </Card>;
 };
