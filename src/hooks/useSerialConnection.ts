@@ -166,7 +166,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
         speakFunction('Connection failed');
       }
     }
-  }, [speakFunction, isConnected, connectionStatus, currentData, lastStatusFlags, maxAltitudeAnnounced]);
+  }, [speakFunction]);
 
   const handleDisconnect = useCallback(async () => {
     try {
