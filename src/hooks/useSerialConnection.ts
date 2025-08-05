@@ -73,7 +73,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             
             for (const line of lines) {
               if (line.trim()) {
-                console.log('Processing line:', line.trim());
                 // Store all raw data
                 setRawData(prev => [...prev, line.trim()]);
                 
@@ -117,9 +116,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   */
                 } else {
                   // Try to parse as telemetry data
-                  console.log('Attempting to parse telemetry:', line.trim());
                   const data = parseTelemetryPacket(line);
-                  console.log('Parsed telemetry result:', data);
                   if (data) {
                     setCurrentData(data);
                     setTelemetryData(prev => [...prev, data]);
