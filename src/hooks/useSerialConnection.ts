@@ -56,13 +56,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
           setConnectionStatus('connected');
           toast.success('Serial port connected successfully!');
           
-          console.log('SERIAL CONNECTION: Starting read loop...');
-          let readCount = 0;
           while (true) {
-            readCount++;
-            console.log(`SERIAL: Read attempt #${readCount}`);
             const { value, done } = await reader.read();
-            console.log(`SERIAL: Read completed #${readCount}:`, { done, hasValue: !!value });
             if (done) {
               console.log('Reader done, breaking loop');
               break;
@@ -70,20 +65,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
-            
-            // Skip null bytes and empty data - only process actual text
-            if (!value || value.every(byte => byte === 0 || byte === 32)) {
-              console.log('Skipping null/empty data');
-              continue;
-            }
-            
-            // Only process if we have meaningful text (contains digits and commas for CSV)
-            if (text && text.trim() && /[\d,]/.test(text)) {
-              console.log('Processing valid data:', JSON.stringify(text));
-              bufferRef.current += text;
-            } else {
-              console.log('Skipping invalid data:', JSON.stringify(text));
-            }
+            bufferRef.current += text;
             
             // Process complete lines
             const lines = bufferRef.current.split('\n');
