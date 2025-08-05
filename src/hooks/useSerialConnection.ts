@@ -40,18 +40,19 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       const reader = port.readable.getReader();
       readerRef.current = reader;
       
-      setIsConnected(true);
-      setConnectionStatus('connected');
-      toast.success('Serial port connected successfully!');
-      
-      // Voice announcement for connection
-      if (speakFunction) {
-        speakFunction('Serial port connected');
-      }
-      
       // Read loop
       const readLoop = async () => {
         try {
+          // Set connected state only after reader is ready and starting to read
+          setIsConnected(true);
+          setConnectionStatus('connected');
+          toast.success('Serial port connected successfully!');
+          
+          // Voice announcement for connection
+          if (speakFunction) {
+            speakFunction('Serial port connected');
+          }
+          
           while (true) {
             const { value, done } = await reader.read();
             if (done) {
