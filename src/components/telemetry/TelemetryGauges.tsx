@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TelemetryData } from "@/types/telemetry";
-import { Gauge, Thermometer, Battery, Activity } from "lucide-react";
+import { Gauge, Thermometer, Battery, Activity, Umbrella } from "lucide-react";
 
 interface TelemetryGaugesProps {
   data: TelemetryData | null;
@@ -11,8 +11,8 @@ interface TelemetryGaugesProps {
 export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
   if (!data) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
           <Card key={i} className="p-6 bg-card/30 border-border/30">
             <div className="text-center">
               <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted/50 flex items-center justify-center">
@@ -33,10 +33,20 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
     return { color: "text-mission-success", status: "GOOD" };
   };
 
+  const getParachuteStatus = (statusFlags: number) => {
+    const isDeployed = (statusFlags & 0b00001000) !== 0;
+    return {
+      deployed: isDeployed,
+      color: isDeployed ? "text-mission-success" : "text-muted-foreground",
+      status: isDeployed ? "DEPLOYED" : "STOWED"
+    };
+  };
+
   const voltageStatus = getVoltageStatus(data.voltage);
+  const parachuteStatus = getParachuteStatus(data.statusFlags);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Altitude */}
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 relative overflow-hidden">
         {isLive && (
@@ -56,16 +66,37 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
         </div>
       </Card>
 
-      {/* Temperature */}
+      {/* G-Force */}
+      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-mission-warning/20 flex items-center justify-center">
+            <Activity className="h-6 w-6 text-mission-warning" />
+          </div>
+          <p className="text-3xl font-mono font-bold telemetry-display text-mission-warning">
+            {Math.sqrt(data.accelX ** 2 + data.accelY ** 2 + data.accelZ ** 2).toFixed(2)}
+          </p>
+          <p className="text-sm text-muted-foreground">G-FORCE</p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <div>X: {data.accelX.toFixed(2)}g</div>
+            <div>Y: {data.accelY.toFixed(2)}g</div>
+            <div>Z: {data.accelZ.toFixed(2)}g</div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Parachute */}
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-mission-info/20 flex items-center justify-center">
-            <Thermometer className="h-6 w-6 text-mission-info" />
+            <Umbrella className="h-6 w-6 text-mission-info" />
           </div>
-          <p className="text-3xl font-mono font-bold telemetry-display text-mission-info">
-            {data.temperature.toFixed(1)}
+          <p className={`text-3xl font-mono font-bold telemetry-display ${parachuteStatus.color}`}>
+            {parachuteStatus.deployed ? "●" : "○"}
           </p>
-          <p className="text-sm text-muted-foreground">TEMP (°C)</p>
+          <p className="text-sm text-muted-foreground">PARACHUTE</p>
+          <Badge className={`mt-2 text-xs ${parachuteStatus.color}`}>
+            {parachuteStatus.status}
+          </Badge>
         </div>
       </Card>
 
@@ -85,21 +116,16 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
         </div>
       </Card>
 
-      {/* G-Force */}
+      {/* Temperature */}
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-mission-warning/20 flex items-center justify-center">
-            <Activity className="h-6 w-6 text-mission-warning" />
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-mission-info/20 flex items-center justify-center">
+            <Thermometer className="h-6 w-6 text-mission-info" />
           </div>
-          <p className="text-3xl font-mono font-bold telemetry-display text-mission-warning">
-            {Math.sqrt(data.accelX ** 2 + data.accelY ** 2 + data.accelZ ** 2).toFixed(2)}
+          <p className="text-3xl font-mono font-bold telemetry-display text-mission-info">
+            {data.temperature.toFixed(1)}
           </p>
-          <p className="text-sm text-muted-foreground">G-FORCE</p>
-          <div className="mt-2 text-xs text-muted-foreground">
-            <div>X: {data.accelX.toFixed(2)}g</div>
-            <div>Y: {data.accelY.toFixed(2)}g</div>
-            <div>Z: {data.accelZ.toFixed(2)}g</div>
-          </div>
+          <p className="text-sm text-muted-foreground">TEMP (°C)</p>
         </div>
       </Card>
     </div>
