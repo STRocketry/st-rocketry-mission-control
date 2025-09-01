@@ -1,71 +1,64 @@
 ---
 # cPanel Git Version Control Deployment Configuration
 # This file automates the deployment of the ST Rocketry Mission Control application
-# from the Git repository to the public_html directory
+# specifically for a subdomain directory on the server
 
 deployment:
   tasks:
-    # Set the deployment path (where the website files will be deployed)
-    - export DEPLOYPATH=/home/perevozk/public_html
-    
+    # Set the deployment path (folder for the subdomain)
+    - export DEPLOYPATH=/home/perevozk/subdomain_folder
+
     # Navigate to the Git repository directory
+    - echo "Navigating to repository folder..."
     - cd /home/perevozk/repositories/st-rocketry-mission-control
-    
-    # Clean any previous build artifacts to ensure a fresh build
+
+    # Clean any previous build artifacts (optional, but ensures a clean build)
     - echo "Cleaning previous build artifacts..."
     - rm -rf dist/ || true
     - rm -rf node_modules/.cache || true
-    
+
     # Install project dependencies
-    # Using the full path to npm to ensure it's found in the cPanel environment
-    - echo "Installing project dependencies..."
+    - echo "Installing project dependencies using npm..."
     - /usr/bin/npm ci --production=false
-    
-    # Build the project (creates optimized static files in dist directory)
-    - echo "Building the project..."
+
+    # Build the project (Vite creates optimized static files in dist directory)
+    - echo "Building the project with npm run build..."
     - /usr/bin/npm run build
-    
-    # Verify that the build was successful
-    - echo "Verifying build output..."
+
+    # Verify that the build was successful (checks for dist directory and index.html)
+    - echo "Verifying that the build was successful..."
     - test -d "./dist" || (echo "Build failed: dist directory not found" && exit 1)
     - test -f "./dist/index.html" || (echo "Build failed: index.html not found" && exit 1)
-    
-    # Clean the deployment directory (remove old files)
-    # This ensures we don't have stale files from previous deployments
-    - echo "Cleaning deployment directory..."
-    - find $DEPLOYPATH -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'cgi-bin' -exec rm -rf {} + || true
-    
-    # Copy the built files to the deployment directory
-    # Using -R for recursive copy and preserving file permissions
-    - echo "Deploying files to public_html..."
+
+    # Clean the deployment directory
+    - echo "Cleaning up old files in the deployment directory..."
+    - find $DEPLOYPATH -mindepth 1 -maxdepth 1 -exec rm -rf {} + || true
+
+    # Copy the new build files to the deployment directory
+    - echo "Copying new build files..."
     - /bin/cp -R ./dist/* $DEPLOYPATH/
-    
-    # Set proper file permissions for web files
-    # Files: 644 (readable by owner, group, and others; writable by owner)
-    # Directories: 755 (readable and executable by all; writable by owner)
-    - echo "Setting proper file permissions..."
-    - find $DEPLOYPATH -type f -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.json" -o -name "*.txt" -o -name "*.ico" -o -name "*.png" -o -name "*.jpg" -o -name "*.svg" | xargs chmod 644
-    - find $DEPLOYPATH -type d | xargs chmod 755
-    
-    # Create a deployment timestamp for reference
-    - echo "Creating deployment timestamp..."
+
+    # Set proper file permissions (644 for files, 755 for directories)
+    - echo "Setting proper permissions for files in deployment directory..."
+    - find $DEPLOYPATH -type f -exec chmod 644 {} +
+    - find $DEPLOYPATH -type d -exec chmod 755 {} +
+
+    # Create a deployment timestamp file for reference
+    - echo "Adding deployment timestamp..."
     - echo "Deployed on: $(date)" > $DEPLOYPATH/.deployment-info
     - echo "Git commit: $(git rev-parse --short HEAD)" >> $DEPLOYPATH/.deployment-info
-    - echo "Repository: /home/perevozk/repositories/st-rocketry-mission-control" >> $DEPLOYPATH/.deployment-info
-    
-    # Clean up any temporary files that might have been copied
-    - echo "Cleaning up temporary files..."
+
+    # Clean up unnecessary files
+    - echo "Removing unnecessary files from deployment..."
     - rm -f $DEPLOYPATH/.DS_Store
     - rm -rf $DEPLOYPATH/.git*
-    - rm -f $DEPLOYPATH/*.log
-    - rm -f $DEPLOYPATH/node_modules
-    
-    # Verify deployment was successful
+
+    # Verify that deployment is successful
     - echo "Verifying deployment..."
-    - test -f "$DEPLOYPATH/index.html" || (echo "Deployment failed: index.html not found in public_html" && exit 1)
-    
+    - test -f "$DEPLOYPATH/index.html" || (echo "Deployment failed: index.html not found in deployment directory" && exit 1)
+
     # Final success message
     - echo "✅ Deployment completed successfully!"
-    - echo "🚀 ST Rocketry Mission Control is now live!"
+    - echo "🚀 Application is live on the subdomain!"
     - echo "📁 Files deployed to: $DEPLOYPATH"
     - ls -la $DEPLOYPATH
