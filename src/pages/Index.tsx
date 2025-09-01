@@ -35,11 +35,11 @@ const Index = () => {
     clearData();
     toast.success("Telemetry data cleared");
   };
-  return <div className="min-h-screen bg-background mission-grid relative overflow-hidden">
+  return <div className="min-h-screen bg-background mission-grid relative overflow-y-auto">
       {/* Animated scan line effect */}
       <div className="absolute top-0 left-0 w-1 h-full bg-primary/30 scan-line opacity-20" />
       
-      <div className="relative z-10 p-3 lg:p-6 space-y-4 lg:space-y-6">
+      <div className="relative z-10 p-3 lg:p-6 space-y-4 lg:space-y-6 pb-8">
         {/* Header */}
         <div className="relative mb-4 lg:mb-8">
           <div className="text-center">
@@ -67,8 +67,8 @@ const Index = () => {
               <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
             </div>
 
-            {/* Raw Data Panel - Only on larger screens */}
-            <div className="hidden lg:block">
+            {/* Raw Data Panel - Always visible */}
+            <div>
               <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
             </div>
 
@@ -108,10 +108,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Raw Data Panel - Mobile Only */}
-        <div className="lg:hidden">
-          <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
-        </div>
 
         {/* Voice Alerts - Mobile Only */}
         <div className="lg:hidden">
