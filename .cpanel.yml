@@ -1,7 +1,7 @@
 ---
-# cPanel Git Version Control Deployment Configuration
+# Enhanced cPanel deployment with logging
 # Automates the deployment of the ST Rocketry Mission Control application
-# specifically to the subdomain directory: /home/perevozk/st-rocketry-mission-control
+# and saves a log of the process for debugging purposes
 
 deployment:
   tasks:
@@ -9,56 +9,38 @@ deployment:
     - export DEPLOYPATH=/home/perevozk/st-rocketry-mission-control
 
     # Переходим в папку репозитория
-    - echo "Navigating to repository folder..."
+    - echo "Navigating to repository folder..." | tee deploy.log
     - cd /home/perevozk/repositories/st-rocketry-mission-control
 
-    # Очищаем предыдущие сборки, чтобы гарантировать свежую сборку
-    - echo "Cleaning previous build artifacts..."
-    - rm -rf dist/ || true
-    - rm -rf node_modules/.cache || true
+    # Очищаем старые сборки (если есть)
+    - echo "Cleaning previous build artifacts..." | tee -a deploy.log
+    - rm -rf dist/ || true | tee -a deploy.log
 
     # Устанавливаем зависимости проекта
-    - echo "Installing project dependencies using npm..."
-    - /usr/bin/npm ci --production=false
+    - echo "Installing dependencies with npm..." | tee -a deploy.log
+    - /usr/bin/npm ci --production=false 2>&1 | tee -a deploy.log
 
-    # Собираем проект (создаёт статические файлы в папке dist)
-    - echo "Building the project with npm run build..."
-    - /usr/bin/npm run build
+    # Собираем проект
+    - echo "Building the project with npm run build..." | tee -a deploy.log
+    - /usr/bin/npm run build 2>&1 | tee -a deploy.log
 
-    # Проверяем успешность сборки
-    - echo "Verifying that the build was successful..."
-    - test -d "./dist" || (echo "Build failed: dist directory not found" && exit 1)
-    - test -f "./dist/index.html" || (echo "Build failed: index.html not found" && exit 1)
+    # Проверяем наличие dist перед копированием
+    - echo "Checking for dist folder..." | tee -a deploy.log
+    - test -d "./dist" || (echo "Build failed: dist directory not found" && exit 1) | tee -a deploy.log
+    - test -f "./dist/index.html" || (echo "Build failed: index.html not found" && exit 1) | tee -a deploy.log
 
-    # Очищаем директорию поддомена от старых файлов
-    - echo "Cleaning up old files in the deployment directory..."
-    - find $DEPLOYPATH -mindepth 1 -maxdepth 1 -exec rm -rf {} + || true
+    # Копируем файлы в папку поддомена
+    - echo "Copying files to deployment directory..." | tee -a deploy.log
+    - /bin/cp -R ./dist/* $DEPLOYPATH/ 2>&1 | tee -a deploy.log
 
-    # Копируем новую сборку из папки dist в директорию поддомена
-    - echo "Copying new build files..."
-    - /bin/cp -R ./dist/* $DEPLOYPATH/
+    # Проверяем, что файлы скопировались
+    - echo "Verifying deployed files..." | tee -a deploy.log
+    - test -f "$DEPLOYPATH/index.html" || (echo "Deployment failed: index.html not found in deployment directory" && exit 1) | tee -a deploy.log
 
-    # Устанавливаем правильные права файлов (644 - для файлов, 755 - для папок)
-    - echo "Setting proper permissions for files in deployment directory..."
-    - find $DEPLOYPATH -type f -exec chmod 644 {} +
-    - find $DEPLOYPATH -type d -exec chmod 755 {} +
+    # Устанавливаем правильные права на файлы
+    - echo "Setting permissions on deployed files..." | tee -a deploy.log
+    - find $DEPLOYPATH -type f -exec chmod 644 {} + | tee -a deploy.log
+    - find $DEPLOYPATH -type d -exec chmod 755 {} + | tee -a deploy.log
 
-    # Создаём файл с отметкой времени для деплоя
-    - echo "Adding deployment timestamp..."
-    - echo "Deployed on: $(date)" > $DEPLOYPATH/.deployment-info
-    - echo "Git commit: $(git rev-parse --short HEAD)" >> $DEPLOYPATH/.deployment-info
-
-    # Чистим ненужные файлы, чтобы избежать конфликтов
-    - echo "Removing unnecessary files from deployment directory..."
-    - rm -f $DEPLOYPATH/.DS_Store
-    - rm -rf $DEPLOYPATH/.git*
-
-    # Проверяем, что деплой успешно завершён
-    - echo "Verifying deployment..."
-    - test -f "$DEPLOYPATH/index.html" || (echo "Deployment failed: index.html not found in deployment directory" && exit 1)
-
-    # Финальное сообщение об успешном деплое
-    - echo "✅ Deployment completed successfully!"
-    - echo "🚀 Application is live on the subdomain!"
-    - echo "📁 Files deployed to: $DEPLOYPATH"
-    - ls -la $DEPLOYPATH
+    # Финальное сообщение
+    - echo "✅ Deployment completed successfully!" | tee -a deploy.log
