@@ -35,7 +35,7 @@ const Index = () => {
     clearData();
     toast.success("Telemetry data cleared");
   };
-  return <div className="min-h-screen bg-background mission-grid relative overflow-y-auto">
+  return <div className="h-screen bg-background mission-grid relative overflow-y-auto">
       {/* Animated scan line effect */}
       <div className="absolute top-0 left-0 w-1 h-full bg-primary/30 scan-line opacity-20" />
       
