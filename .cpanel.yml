@@ -1,46 +1,35 @@
 ---
-# Enhanced cPanel deployment with logging
-# Automates the deployment of the ST Rocketry Mission Control application
-# and saves a log of the process for debugging purposes
-
 deployment:
   tasks:
     # Указываем путь для деплоя (папка поддомена)
     - export DEPLOYPATH=/home/perevozk/st-rocketry-mission-control
 
     # Переходим в папку репозитория
-    - echo "Navigating to repository folder..." | tee deploy.log
+    - echo "Navigating to repository folder..."
     - cd /home/perevozk/repositories/st-rocketry-mission-control
 
-    # Очищаем старые сборки (если есть)
-    - echo "Cleaning previous build artifacts..." | tee -a deploy.log
-    - rm -rf dist/ || true | tee -a deploy.log
+    # Устанавливаем зависимости
+    - echo "Installing dependencies with npm..."
+    - /opt/cpanel/ea-nodejs18/bin/npm ci --production=false
 
-    # Устанавливаем зависимости проекта
-    - echo "Installing dependencies with npm..." | tee -a deploy.log
-    - /usr/bin/npm ci --production=false 2>&1 | tee -a deploy.log
+    # Собираем проект (создаём папку dist)
+    - echo "Building the project with npm run build..."
+    - /opt/cpanel/ea-nodejs18/bin/npm run build
 
-    # Собираем проект
-    - echo "Building the project with npm run build..." | tee -a deploy.log
-    - /usr/bin/npm run build 2>&1 | tee -a deploy.log
+    # Проверяем наличие папки dist перед копированием
+    - echo "Verifying build output..."
+    - test -d ./dist || (echo "Build failed: dist directory not found" && exit 1)
+    - test -f ./dist/index.html || (echo "Build failed: index.html not found" && exit 1)
 
-    # Проверяем наличие dist перед копированием
-    - echo "Checking for dist folder..." | tee -a deploy.log
-    - test -d "./dist" || (echo "Build failed: dist directory not found" && exit 1) | tee -a deploy.log
-    - test -f "./dist/index.html" || (echo "Build failed: index.html not found" && exit 1) | tee -a deploy.log
-
-    # Копируем файлы в папку поддомена
-    - echo "Copying files to deployment directory..." | tee -a deploy.log
-    - /bin/cp -R ./dist/* $DEPLOYPATH/ 2>&1 | tee -a deploy.log
-
-    # Проверяем, что файлы скопировались
-    - echo "Verifying deployed files..." | tee -a deploy.log
-    - test -f "$DEPLOYPATH/index.html" || (echo "Deployment failed: index.html not found in deployment directory" && exit 1) | tee -a deploy.log
+    # Копируем файлы из dist в папку поддомена
+    - echo "Copying files from dist to deployment path..."
+    - cp -R ./dist/* $DEPLOYPATH
 
     # Устанавливаем правильные права на файлы
-    - echo "Setting permissions on deployed files..." | tee -a deploy.log
-    - find $DEPLOYPATH -type f -exec chmod 644 {} + | tee -a deploy.log
-    - find $DEPLOYPATH -type d -exec chmod 755 {} + | tee -a deploy.log
+    - echo "Setting permissions on deployed files..."
+    - find $DEPLOYPATH -type f -exec chmod 644 {} +
+    - find $DEPLOYPATH -type d -exec chmod 755 {} +
 
     # Финальное сообщение
-    - echo "✅ Deployment completed successfully!" | tee -a deploy.log
+    - echo "✅ Deployment completed successfully!"
+    - echo "🚀 Application is live!"
