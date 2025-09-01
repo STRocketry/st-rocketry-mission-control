@@ -12,6 +12,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [lastStatusFlags, setLastStatusFlags] = useState<number>(0);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   
+  // Flight timer state
+  const [flightState, setFlightState] = useState<'pre-flight' | 'launched' | 'landed'>('pre-flight');
+  const [launchTime, setLaunchTime] = useState<number | null>(null);
+  const [landingTime, setLandingTime] = useState<number | null>(null);
+  const [baselineAltitude, setBaselineAltitude] = useState<number | null>(null);
+  const [baselineGForce, setBaselineGForce] = useState<number | null>(null);
+  
   const portRef = useRef<any>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const bufferRef = useRef<string>('');
@@ -71,6 +78,42 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   if (data) {
                     setCurrentData(data);
                     setTelemetryData(prev => [...prev, data]);
+                    
+                    // Flight state detection logic
+                    setFlightState(prevState => {
+                      // Set baseline values for the first few readings
+                      if (baselineAltitude === null || baselineGForce === null) {
+                        setBaselineAltitude(data.altitude);
+                        setBaselineGForce(data.accelY);
+                        return prevState;
+                      }
+                      
+                      // Launch detection: significant altitude gain (>5m) AND significant Y acceleration (>2g above baseline)
+                      if (prevState === 'pre-flight' && 
+                          data.altitude > (baselineAltitude + 5) && 
+                          Math.abs(data.accelY - baselineGForce) > 2) {
+                        setLaunchTime(Date.now());
+                        if (speakFunction) {
+                          speakFunction("Launch detected! Flight timer started.");
+                        }
+                        toast.success("🚀 Launch detected! Flight timer started.");
+                        return 'launched';
+                      }
+                      
+                      // Landing detection: back to near baseline altitude (<3m above baseline) AND stable acceleration (within 0.5g of baseline)
+                      if (prevState === 'launched' && 
+                          data.altitude <= (baselineAltitude + 3) && 
+                          Math.abs(data.accelY - baselineGForce) < 0.5) {
+                        setLandingTime(Date.now());
+                        if (speakFunction) {
+                          speakFunction("Landing detected! Flight complete.");
+                        }
+                        toast.success("🏁 Landing detected! Flight timer stopped.");
+                        return 'landed';
+                      }
+                      
+                      return prevState;
+                    });
                     
                     // Voice alerts for status changes
                     if (speakFunction && data.statusFlags !== lastStatusFlags) {
@@ -143,6 +186,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const clearData = useCallback(() => {
     setTelemetryData([]);
     setCurrentData(null);
+    // Reset flight timer state
+    setFlightState('pre-flight');
+    setLaunchTime(null);
+    setLandingTime(null);
+    setBaselineAltitude(null);
+    setBaselineGForce(null);
+    setMaxAltitudeAnnounced(false);
   }, []);
 
   const clearRawData = useCallback(() => {
@@ -197,7 +247,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     ? Math.max(...telemetryData.map(d => d.maxAltitude))
     : 0;
 
-  const flightTime = currentData?.time || 0;
+  // Calculate actual flight time based on launch/landing detection
+  const flightTime = (() => {
+    if (!launchTime) return 0; // No launch detected yet
+    if (landingTime) return landingTime - launchTime; // Landed
+    if (flightState === 'launched') return Date.now() - launchTime; // Still in flight
+    return 0; // Default
+  })();
 
   return {
     isConnected,
@@ -208,6 +264,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     textMessages,
     maxAltitude,
     flightTime,
+    flightState,
     handleConnect,
     handleDisconnect,
     clearData,
