@@ -15,11 +15,11 @@ export const StatusPanel = ({
   dataPoints
 }: StatusPanelProps) => {
   const getFlightPhase = (statusFlags: number) => {
-    // if (statusFlags & 128) return {
-    //   phase: "CRITICAL ERROR",
-    //   color: "text-mission-critical",
-    //   icon: AlertTriangle
-    // };
+    if (statusFlags & 128) return {
+      phase: "CRITICAL ERROR",
+      color: "text-mission-critical",
+      icon: AlertTriangle
+    };
     if (statusFlags & 8) return {
       phase: "RECOVERY",
       color: "text-mission-success",
@@ -64,10 +64,10 @@ export const StatusPanel = ({
       text: "PARACHUTE DEPLOYED",
       color: "bg-mission-success"
     });
-    // if (flags.criticalError) items.push({
-    //   text: "CRITICAL ERROR",
-    //   color: "bg-mission-critical"
-    // });
+    if (flags.criticalError) items.push({
+      text: "CRITICAL ERROR",
+      color: "bg-mission-critical"
+    });
     return items;
   };
   return <div className="space-y-4">
@@ -138,13 +138,13 @@ export const StatusPanel = ({
             </Badge>
           </div>
           
-{/*           <div className="flex justify-between">
+          <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">System:</span>
             <Badge variant={flags?.criticalError ? "destructive" : "default"}>
               {flags?.criticalError ? "ERROR" : "NORMAL"}
             </Badge>
           </div>
-        </div> */}
+        </div>
 
         
       </Card>
