@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plane, RotateCcw, Plus, Minus } from 'lucide-react';
 import * as THREE from 'three';
+
 interface RocketMeshProps {
   gyroX: number;
   gyroY: number;
   gyroZ: number;
 }
+
 const RocketMesh: React.FC<RocketMeshProps> = ({
   gyroX,
   gyroY,
@@ -22,6 +24,7 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
     y: 0,
     z: 0
   });
+
   useEffect(() => {
     // Update rotation velocities (convert deg/s to rad/s)
     rotationVelocity.current = {
@@ -30,6 +33,7 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
       z: gyroZ * Math.PI / 180
     };
   }, [gyroX, gyroY, gyroZ]);
+
   useFrame((state, delta) => {
     if (rocketRef.current) {
       // Apply rotation based on gyro data
@@ -38,7 +42,9 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
       rocketRef.current.rotation.z += rotationVelocity.current.z * delta;
     }
   });
-  return <group ref={rocketRef}>
+
+  return (
+    <group ref={rocketRef}>
       {/* Main rocket body (cylinder) */}
       <mesh position={[0, 0, 0]}>
         <cylinderGeometry args={[0.3, 0.3, 3, 12]} />
@@ -79,12 +85,15 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
       <Text position={[0, 0, 2]} fontSize={0.3} color="blue" anchorX="center">
         Z (Yaw)
       </Text>
-    </group>;
+    </group>
+  );
 };
+
 interface RocketVisualizationProps {
   data: TelemetryData | null;
   isLive: boolean;
 }
+
 const RocketVisualization: React.FC<RocketVisualizationProps> = ({
   data,
   isLive
@@ -93,13 +102,17 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
   const gyroY = data?.gyroY || 0;
   const gyroZ = data?.gyroZ || 0;
   const [cameraDistance, setCameraDistance] = useState(6);
+
   const handleZoomIn = () => {
     setCameraDistance(prev => Math.max(3, prev - 0.5));
   };
+
   const handleZoomOut = () => {
     setCameraDistance(prev => Math.min(10, prev + 0.5));
   };
-  return <Card className="w-full">
+
+  return (
+    <Card className="w-full">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Plane className="h-5 w-5 text-primary" />
@@ -108,13 +121,16 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* 3D Visualization */}
-          <div className="relative h-64 border border-border rounded-lg overflow-hidden">
-            <Canvas key={cameraDistance} camera={{
-            position: [cameraDistance, cameraDistance, cameraDistance],
-            fov: 50
-          }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+          {/* 3D Visualization - увеличенная */}
+          <div className="relative h-80 border border-border rounded-lg overflow-hidden">
+            <Canvas 
+              key={cameraDistance} 
+              camera={{
+                position: [cameraDistance, cameraDistance, cameraDistance],
+                fov: 50
+              }}
+            >
               <ambientLight intensity={0.6} />
               <directionalLight position={[10, 10, 5]} intensity={0.8} />
               <RocketMesh gyroX={gyroX} gyroY={gyroY} gyroZ={gyroZ} />
@@ -133,46 +149,46 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             </div>
           </div>
 
-          {/* Gyro Data Readouts */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-sm mb-3">ANGULAR VELOCITIES</h4>
+          {/* Gyro Data Readouts - оптимизированная */}
+          <div className="space-y-2">
+            <h4 className="font-semibold text-xs text-muted-foreground mb-2">ANGULAR VELOCITIES</h4>
             
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex justify-between items-center p-3 bg-card border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="h-4 w-4 text-red-500" />
-                  <span className="font-medium text-sm">Roll (X)</span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
+                <div className="flex items-center gap-1">
+                  <RotateCcw className="h-3 w-3 text-red-500" />
+                  <span className="font-medium text-xs">Roll (X)</span>
                 </div>
-                <span className="font-mono text-lg font-bold">
+                <span className="font-mono text-sm font-bold">
                   {gyroX.toFixed(1)}°/s
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-3 bg-card border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="h-4 w-4 text-green-500" />
-                  <span className="font-medium text-sm">Pitch (Y)</span>
+              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
+                <div className="flex items-center gap-1">
+                  <RotateCcw className="h-3 w-3 text-green-500" />
+                  <span className="font-medium text-xs">Pitch (Y)</span>
                 </div>
-                <span className="font-mono text-lg font-bold">
+                <span className="font-mono text-sm font-bold">
                   {gyroY.toFixed(1)}°/s
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-3 bg-card border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium text-sm">Yaw (Z)</span>
+              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
+                <div className="flex items-center gap-1">
+                  <RotateCcw className="h-3 w-3 text-blue-500" />
+                  <span className="font-medium text-xs">Yaw (Z)</span>
                 </div>
-                <span className="font-mono text-lg font-bold">
+                <span className="font-mono text-sm font-bold">
                   {gyroZ.toFixed(1)}°/s
                 </span>
               </div>
             </div>
-
-            
           </div>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default RocketVisualization;
