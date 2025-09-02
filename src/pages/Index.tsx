@@ -11,6 +11,7 @@ import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
 import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
+
 const Index = () => {
   const speakFunctionRef = useRef<((text: string) => void) | null>(null);
   const {
@@ -28,6 +29,7 @@ const Index = () => {
     clearRawData,
     exportData
   } = useSerialConnection(speakFunctionRef.current || undefined);
+
   const handleClearData = () => {
     if (telemetryData.length === 0) {
       toast.error("No data to clear");
@@ -36,7 +38,9 @@ const Index = () => {
     clearData();
     toast.success("Telemetry data cleared");
   };
-  return <div className="h-screen bg-background mission-grid relative overflow-y-auto overflow-x-hidden">
+
+  return (
+    <div className="h-screen bg-background mission-grid relative overflow-y-auto overflow-x-hidden">
       {/* Animated scan line effect */}
       <div className="absolute top-0 left-0 w-1 h-full bg-primary/30 scan-line opacity-20" />
       
@@ -72,13 +76,6 @@ const Index = () => {
             <div>
               <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
             </div>
-
-            {/* Voice Alerts - Bottom of left column */}
-            <div className="hidden lg:block">
-              <VoiceAlerts onSpeak={speakFn => {
-                speakFunctionRef.current = speakFn;
-              }} />
-            </div>
           </div>
 
           {/* Right Column - Status and Controls */}
@@ -109,9 +106,15 @@ const Index = () => {
                 </MissionButton>
               </div>
             </div>
+
+            {/* Voice Alerts - Moved to right column under Data Export */}
+            <div className="hidden lg:block">
+              <VoiceAlerts onSpeak={speakFn => {
+                speakFunctionRef.current = speakFn;
+              }} />
+            </div>
           </div>
         </div>
-
 
         {/* Voice Alerts - Mobile Only */}
         <div className="lg:hidden">
@@ -123,9 +126,10 @@ const Index = () => {
         {/* Footer */}
         <div className="text-center text-xs lg:text-sm text-muted-foreground border-t border-border pt-4">
           <p>ST Rocketry Mission Control v1.0 | WebSerial API Required (Chrome/Edge)</p>
-          
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
