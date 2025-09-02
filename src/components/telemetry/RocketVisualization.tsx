@@ -122,8 +122,8 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-          {/* 3D Visualization - без рамки */}
-          <div className="relative h-80 rounded-lg overflow-hidden">
+          {/* 3D Visualization - с рамкой */}
+          <div className="relative h-80 border border-border rounded-lg overflow-hidden">
             <Canvas 
               key={cameraDistance} 
               camera={{
