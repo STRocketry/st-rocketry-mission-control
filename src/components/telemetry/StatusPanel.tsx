@@ -137,7 +137,7 @@ export const StatusPanel = ({
               {flags?.parachuteDeployed ? "DEPLOYED" : "STOWED"}
             </Badge>
           </div>
-          
+ <!--         
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">System:</span>
             <Badge variant={flags?.criticalError ? "destructive" : "default"}>
@@ -145,7 +145,7 @@ export const StatusPanel = ({
             </Badge>
           </div>
         </div>
-
+-->
         
       </Card>
 
