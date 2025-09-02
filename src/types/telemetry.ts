@@ -36,7 +36,7 @@ export const parseStatusFlags = (flags: number): StatusFlags => ({
   launchDetected: !!(flags & 2),     // 0b00000010 (2) - Launch detected (1=launched)
   hatchOpen: !!(flags & 4),          // 0b00000100 (4) - Hatch status (0=closed, 1=open)
   parachuteDeployed: !!(flags & 8),  // 0b00001000 (8) - Parachute deployed (1=deployed)
-  criticalError: false // !!(flags & 128)     // 0b10000000 (128) - Critical error
+  criticalError: !!(flags & 128)     // 0b10000000 (128) - Critical error
 });
 
 export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
