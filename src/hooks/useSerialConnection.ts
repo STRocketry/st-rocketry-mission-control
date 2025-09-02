@@ -211,9 +211,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     let extension: string;
 
     if (format === 'csv') {
-      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelX,accelY,accelZ,statusFlags\n';
+      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelY,gyroX,gyroY,gyroZ,statusFlags\n';
       const rows = telemetryData.map(d => 
-        `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelX},${d.accelY},${d.accelZ},${d.statusFlags}`
+        `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelY},${d.gyroX},${d.gyroY},${d.gyroZ},${d.statusFlags}`
       ).join('\n');
       content = headers + rows;
       mimeType = 'text/csv';

@@ -73,13 +73,11 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
             <Activity className="h-6 w-6 text-mission-warning" />
           </div>
           <p className="text-3xl font-mono font-bold telemetry-display text-mission-warning">
-            {Math.sqrt(data.accelX ** 2 + data.accelY ** 2 + data.accelZ ** 2).toFixed(2)}
+            {Math.abs(data.accelY).toFixed(2)}
           </p>
-          <p className="text-sm text-muted-foreground">G-FORCE</p>
+          <p className="text-sm text-muted-foreground">G-FORCE Y</p>
           <div className="mt-2 text-xs text-muted-foreground">
-            <div>X: {data.accelX.toFixed(2)}g</div>
-            <div>Y: {data.accelY.toFixed(2)}g</div>
-            <div>Z: {data.accelZ.toFixed(2)}g</div>
+            <div>Vertical: {data.accelY.toFixed(2)}g</div>
           </div>
         </div>
       </Card>

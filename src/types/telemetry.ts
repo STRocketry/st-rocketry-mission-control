@@ -4,9 +4,10 @@ export interface TelemetryData {
   maxAltitude: number;    // Maximum achieved altitude (m)
   temperature: number;    // Sensor temperature (°C)
   voltage: number;        // Battery voltage (V)
-  accelX: number;         // Acceleration X-axis (g)
   accelY: number;         // Acceleration Y-axis (g)
-  accelZ: number;         // Acceleration Z-axis (g)
+  gyroX: number;          // Angular velocity X-axis (deg/s) - Roll
+  gyroY: number;          // Angular velocity Y-axis (deg/s) - Pitch
+  gyroZ: number;          // Angular velocity Z-axis (deg/s) - Yaw
   statusFlags: number;    // Status bitmask
 }
 
@@ -42,8 +43,8 @@ export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
   try {
     const values = csvLine.trim().split(',').map(v => v.trim());
     
-    if (values.length !== 9) {
-      console.warn('Invalid packet length:', values.length);
+    if (values.length !== 10) {
+      console.warn('Invalid packet length:', values.length, 'expected 10');
       return null;
     }
 
@@ -53,10 +54,11 @@ export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
       maxAltitude: parseFloat(values[2]),
       temperature: parseFloat(values[3]),
       voltage: parseFloat(values[4]),
-      accelX: parseFloat(values[5]),
-      accelY: parseFloat(values[6]),
-      accelZ: parseFloat(values[7]),
-      statusFlags: parseInt(values[8])
+      accelY: parseFloat(values[5]),
+      gyroX: parseFloat(values[6]),
+      gyroY: parseFloat(values[7]),
+      gyroZ: parseFloat(values[8]),
+      statusFlags: parseInt(values[9])
     };
   } catch (error) {
     console.error('Error parsing telemetry packet:', error);

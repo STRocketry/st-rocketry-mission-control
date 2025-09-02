@@ -4,6 +4,7 @@ import { TelemetryGauges } from "@/components/telemetry/TelemetryGauges";
 import { AltitudeChart } from "@/components/telemetry/AltitudeChart";
 import { StatusPanel } from "@/components/telemetry/StatusPanel";
 import { RawDataPanel } from "@/components/telemetry/RawDataPanel";
+import RocketVisualization from "@/components/telemetry/RocketVisualization";
 import { DateTimeDisplay } from "@/components/ui/date-time-display";
 import { VoiceAlerts } from "@/components/ui/voice-alerts";
 import { MissionButton } from "@/components/ui/mission-button";
@@ -65,6 +66,11 @@ const Index = () => {
             {/* Altitude Chart */}
             <div className="w-full">
               <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
+            </div>
+
+            {/* 3D Rocket Visualization */}
+            <div className="w-full">
+              <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
             </div>
 
             {/* Raw Data Panel - Always visible */}
