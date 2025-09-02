@@ -121,8 +121,8 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-          {/* 3D Visualization - с рамкой */}
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
+          {/* 3D Visualization - шире с рамкой */}
           <div className="relative h-80 border border-border rounded-lg overflow-hidden">
             <Canvas 
               key={cameraDistance} 
@@ -149,7 +149,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             </div>
           </div>
 
-          {/* Gyro Data Readouts - без рамок */}
+          {/* Gyro Data Readouts - без рамок, уже */}
           <div className="space-y-4">
             <h4 className="font-semibold text-xs text-muted-foreground mb-2 text-center">
               ANGULAR
