@@ -90,9 +90,9 @@ const Index = () => {
             {/* 3D Rocket Visualization */}
             <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
 
-            {/* Data Export Controls */}
-            <div className="space-y-3">
-              <h3 className="text-base lg:text-lg font-bold">DATA EXPORT</h3>
+            {/* Data Export Controls - Now in a panel */}
+            <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
+              <h3 className="text-base lg:text-lg font-bold mb-3 text-card-foreground">DATA EXPORT</h3>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 gap-2">
                 <MissionButton variant="outline" onClick={() => exportData('csv')} disabled={telemetryData.length === 0} className="w-full text-xs lg:text-sm">
