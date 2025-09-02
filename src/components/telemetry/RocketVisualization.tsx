@@ -122,8 +122,8 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-          {/* 3D Visualization - увеличенная */}
-          <div className="relative h-80 border border-border rounded-lg overflow-hidden">
+          {/* 3D Visualization - без рамки */}
+          <div className="relative h-80 rounded-lg overflow-hidden">
             <Canvas 
               key={cameraDistance} 
               camera={{
@@ -149,9 +149,9 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             </div>
           </div>
 
-          {/* Gyro Data Readouts - новый формат */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-xs text-muted-foreground mb-3 text-center">
+          {/* Gyro Data Readouts - без рамок */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-xs text-muted-foreground mb-2 text-center">
               ANGULAR
               <br />
               VELOCITIES
@@ -159,7 +159,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             
             <div className="space-y-3">
               {/* Roll (X) */}
-              <div className="text-center p-3 bg-card border rounded-lg">
+              <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-red-500" />
                   <span className="font-medium text-xs">Roll (X)</span>
@@ -170,7 +170,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
               </div>
 
               {/* Pitch (Y) */}
-              <div className="text-center p-3 bg-card border rounded-lg">
+              <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-green-500" />
                   <span className="font-medium text-xs">Pitch (Y)</span>
@@ -181,7 +181,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
               </div>
 
               {/* Yaw (Z) */}
-              <div className="text-center p-3 bg-card border rounded-lg">
+              <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-blue-500" />
                   <span className="font-medium text-xs">Yaw (Z)</span>
