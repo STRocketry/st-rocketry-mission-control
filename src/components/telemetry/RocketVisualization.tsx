@@ -149,37 +149,44 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             </div>
           </div>
 
-          {/* Gyro Data Readouts - оптимизированная */}
-          <div className="space-y-2">
-            <h4 className="font-semibold text-xs text-muted-foreground mb-2">ANGULAR VELOCITIES</h4>
+          {/* Gyro Data Readouts - новый формат */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-xs text-muted-foreground mb-3 text-center">
+              ANGULAR
+              <br />
+              VELOCITIES
+            </h4>
             
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
-                <div className="flex items-center gap-1">
+            <div className="space-y-3">
+              {/* Roll (X) */}
+              <div className="text-center p-3 bg-card border rounded-lg">
+                <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-red-500" />
                   <span className="font-medium text-xs">Roll (X)</span>
                 </div>
-                <span className="font-mono text-sm font-bold">
+                <span className="font-mono text-lg font-bold block">
                   {gyroX.toFixed(1)}°/s
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
-                <div className="flex items-center gap-1">
+              {/* Pitch (Y) */}
+              <div className="text-center p-3 bg-card border rounded-lg">
+                <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-green-500" />
                   <span className="font-medium text-xs">Pitch (Y)</span>
                 </div>
-                <span className="font-mono text-sm font-bold">
+                <span className="font-mono text-lg font-bold block">
                   {gyroY.toFixed(1)}°/s
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-2 bg-card border rounded-md">
-                <div className="flex items-center gap-1">
+              {/* Yaw (Z) */}
+              <div className="text-center p-3 bg-card border rounded-lg">
+                <div className="flex items-center justify-center gap-1 mb-1">
                   <RotateCcw className="h-3 w-3 text-blue-500" />
                   <span className="font-medium text-xs">Yaw (Z)</span>
                 </div>
-                <span className="font-mono text-sm font-bold">
+                <span className="font-mono text-lg font-bold block">
                   {gyroZ.toFixed(1)}°/s
                 </span>
               </div>
