@@ -68,11 +68,6 @@ const Index = () => {
               <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
             </div>
 
-            {/* 3D Rocket Visualization */}
-            <div className="w-full">
-              <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
-            </div>
-
             {/* Raw Data Panel - Always visible */}
             <div>
               <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
@@ -94,6 +89,9 @@ const Index = () => {
             </div>
 
             <StatusPanel data={currentData} isLive={isConnected && connectionStatus === 'connected'} flightTime={flightTime} dataPoints={telemetryData.length} />
+
+            {/* 3D Rocket Visualization */}
+            <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
 
             {/* Data Export Controls */}
             <div className="space-y-3">

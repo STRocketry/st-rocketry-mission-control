@@ -51,22 +51,22 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
         <meshPhongMaterial color="#ffffff" />
       </mesh>
       
-      {/* Fins - improved triangular shapes */}
+      {/* Fins - colorful triangular shapes */}
       <mesh position={[0.5, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
         <coneGeometry args={[0.4, 0.1, 3]} />
-        <meshPhongMaterial color="#000000" />
+        <meshPhongMaterial color="#ff0000" />
       </mesh>
       <mesh position={[-0.5, -1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
         <coneGeometry args={[0.4, 0.1, 3]} />
-        <meshPhongMaterial color="#000000" />
+        <meshPhongMaterial color="#00ff00" />
       </mesh>
       <mesh position={[0, -1.2, 0.5]} rotation={[Math.PI / 2, 0, 0]}>
         <coneGeometry args={[0.4, 0.1, 3]} />
-        <meshPhongMaterial color="#000000" />
+        <meshPhongMaterial color="#0000ff" />
       </mesh>
       <mesh position={[0, -1.2, -0.5]} rotation={[-Math.PI / 2, 0, 0]}>
         <coneGeometry args={[0.4, 0.1, 3]} />
-        <meshPhongMaterial color="#000000" />
+        <meshPhongMaterial color="#ff8800" />
       </mesh>
 
       {/* Axis labels */}
@@ -111,7 +111,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* 3D Visualization */}
           <div className="relative h-64 border border-border rounded-lg overflow-hidden">
-            <Canvas camera={{
+            <Canvas key={cameraDistance} camera={{
             position: [cameraDistance, cameraDistance, cameraDistance],
             fov: 50
           }}>
