@@ -169,10 +169,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground mt-4">
-              <p>Real-time rocket orientation visualization based on gyroscope data.</p>
-              
-            </div>
+            
           </div>
         </div>
       </CardContent>
