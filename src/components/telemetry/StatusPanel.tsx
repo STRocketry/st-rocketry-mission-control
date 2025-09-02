@@ -143,8 +143,9 @@ export const StatusPanel = ({
             <Badge variant={flags?.criticalError ? "destructive" : "default"}>
               {flags?.criticalError ? "ERROR" : "NORMAL"}
             </Badge>
-          </div>
-        </div> */}
+          </div> */}
+          
+        </div>
 
         
       </Card>
