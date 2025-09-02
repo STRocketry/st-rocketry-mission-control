@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import { TelemetryData } from '@/types/telemetry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Plane, RotateCcw, Plus, Minus } from 'lucide-react';
 import * as THREE from 'three';
 
 interface RocketMeshProps {
@@ -39,31 +40,31 @@ const RocketMesh: React.FC<RocketMeshProps> = ({ gyroX, gyroY, gyroZ }) => {
       {/* Main rocket body (cylinder) */}
       <mesh position={[0, 0, 0]}>
         <cylinderGeometry args={[0.3, 0.3, 3, 12]} />
-        <meshPhongMaterial color="#e11d48" />
+        <meshPhongMaterial color="#ffffff" />
       </mesh>
       
       {/* Nose cone */}
       <mesh position={[0, 1.8, 0]}>
         <coneGeometry args={[0.3, 0.6, 12]} />
-        <meshPhongMaterial color="#dc2626" />
+        <meshPhongMaterial color="#ffffff" />
       </mesh>
       
-      {/* Fins */}
-      <mesh position={[0.4, -1.2, 0]} rotation={[0, 0, Math.PI / 4]}>
-        <boxGeometry args={[0.6, 0.1, 0.6]} />
-        <meshPhongMaterial color="#991b1b" />
+      {/* Fins - improved triangular shapes */}
+      <mesh position={[0.5, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <coneGeometry args={[0.4, 0.1, 3]} />
+        <meshPhongMaterial color="#000000" />
       </mesh>
-      <mesh position={[-0.4, -1.2, 0]} rotation={[0, 0, -Math.PI / 4]}>
-        <boxGeometry args={[0.6, 0.1, 0.6]} />
-        <meshPhongMaterial color="#991b1b" />
+      <mesh position={[-0.5, -1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <coneGeometry args={[0.4, 0.1, 3]} />
+        <meshPhongMaterial color="#000000" />
       </mesh>
-      <mesh position={[0, -1.2, 0.4]} rotation={[Math.PI / 4, 0, 0]}>
-        <boxGeometry args={[0.6, 0.1, 0.6]} />
-        <meshPhongMaterial color="#991b1b" />
+      <mesh position={[0, -1.2, 0.5]} rotation={[Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.4, 0.1, 3]} />
+        <meshPhongMaterial color="#000000" />
       </mesh>
-      <mesh position={[0, -1.2, -0.4]} rotation={[-Math.PI / 4, 0, 0]}>
-        <boxGeometry args={[0.6, 0.1, 0.6]} />
-        <meshPhongMaterial color="#991b1b" />
+      <mesh position={[0, -1.2, -0.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.4, 0.1, 3]} />
+        <meshPhongMaterial color="#000000" />
       </mesh>
 
       {/* Axis labels */}
@@ -89,6 +90,15 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({ data, isLive 
   const gyroX = data?.gyroX || 0;
   const gyroY = data?.gyroY || 0; 
   const gyroZ = data?.gyroZ || 0;
+  const [cameraDistance, setCameraDistance] = useState(6);
+
+  const handleZoomIn = () => {
+    setCameraDistance(prev => Math.max(3, prev - 0.5));
+  };
+
+  const handleZoomOut = () => {
+    setCameraDistance(prev => Math.min(10, prev + 0.5));
+  };
 
   return (
     <Card className="w-full">
@@ -102,15 +112,34 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({ data, isLive 
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* 3D Visualization */}
-          <div className="h-64 border border-border rounded-lg overflow-hidden">
-            <Canvas camera={{ position: [4, 4, 4], fov: 50 }}>
+          <div className="relative h-64 border border-border rounded-lg overflow-hidden">
+            <Canvas camera={{ position: [cameraDistance, cameraDistance, cameraDistance], fov: 50 }}>
               <ambientLight intensity={0.6} />
               <directionalLight position={[10, 10, 5]} intensity={0.8} />
               <RocketMesh gyroX={gyroX} gyroY={gyroY} gyroZ={gyroZ} />
-              <OrbitControls enableZoom={true} enablePan={false} />
               {/* Axis helpers */}
               <axesHelper args={[2]} />
             </Canvas>
+            
+            {/* Zoom Controls */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleZoomIn}
+                className="w-8 h-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleZoomOut}
+                className="w-8 h-8 p-0"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Gyro Data Readouts */}
@@ -151,7 +180,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({ data, isLive 
 
             <div className="text-xs text-muted-foreground mt-4">
               <p>Real-time rocket orientation visualization based on gyroscope data.</p>
-              <p className="mt-1">Drag to orbit • Scroll to zoom</p>
+              <p className="mt-1">Use +/- buttons to zoom</p>
             </div>
           </div>
         </div>
