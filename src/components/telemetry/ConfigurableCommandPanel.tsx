@@ -18,12 +18,12 @@ interface ConfigurableCommandPanelProps {
   isConnected: boolean;
 }
 const defaultButtonConfig: ButtonConfig = {
-  title: "DEPLOY",
+  title: "EMERGENCY DEPLOY",
   command: "DEPLOY",
   color: "#ef4444",
   // red-500
-  numberOfCommands: 1,
-  intervalMs: 100
+  numberOfCommands: 15,
+  intervalMs: 20
 };
 const predefinedColors = [{
   name: "Red",
@@ -53,8 +53,8 @@ export const ConfigurableCommandPanel = ({
   });
   const [button2Config, setButton2Config] = useState<ButtonConfig>({
     ...defaultButtonConfig,
-    title: "ABORT",
-    command: "ABORT",
+    title: "RESET",
+    command: "RESET",
     color: "#f97316" // orange-500
   });
   const [editingButton, setEditingButton] = useState<1 | 2 | null>(null);
