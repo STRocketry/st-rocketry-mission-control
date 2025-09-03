@@ -43,21 +43,21 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
         <meshPhongMaterial color="#ffffff" />
       </mesh>
       
-      {/* Fins - colorful triangular shapes */}
-      <mesh position={[0.5, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <coneGeometry args={[0.4, 0.1, 3]} />
+      {/* Fins - properly attached to rocket body */}
+      <mesh position={[0.35, -1.2, 0]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.6, 0.05, 0.8]} />
         <meshPhongMaterial color="#ff0000" />
       </mesh>
-      <mesh position={[-0.5, -1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.4, 0.1, 3]} />
+      <mesh position={[-0.35, -1.2, 0]} rotation={[0, 0, -Math.PI / 4]}>
+        <boxGeometry args={[0.6, 0.05, 0.8]} />
         <meshPhongMaterial color="#00ff00" />
       </mesh>
-      <mesh position={[0, -1.2, 0.5]} rotation={[Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.4, 0.1, 3]} />
+      <mesh position={[0, -1.2, 0.35]} rotation={[Math.PI / 4, 0, 0]}>
+        <boxGeometry args={[0.8, 0.05, 0.6]} />
         <meshPhongMaterial color="#0000ff" />
       </mesh>
-      <mesh position={[0, -1.2, -0.5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.4, 0.1, 3]} />
+      <mesh position={[0, -1.2, -0.35]} rotation={[-Math.PI / 4, 0, 0]}>
+        <boxGeometry args={[0.8, 0.05, 0.6]} />
         <meshPhongMaterial color="#ff8800" />
       </mesh>
 
