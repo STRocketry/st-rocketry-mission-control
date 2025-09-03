@@ -5,9 +5,9 @@ export interface TelemetryData {
   temperature: number;    // Sensor temperature (°C)
   voltage: number;        // Battery voltage (V)
   accelY: number;         // Acceleration Y-axis (g)
-  gyroX: number;          // Angular velocity X-axis (deg/s) - Roll
-  gyroY: number;          // Angular velocity Y-axis (deg/s) - Pitch
-  gyroZ: number;          // Angular velocity Z-axis (deg/s) - Yaw
+  angleX: number;         // Absolute rotation angle X-axis (degrees) - Roll
+  angleY: number;         // Absolute rotation angle Y-axis (degrees) - Pitch
+  angleZ: number;         // Absolute rotation angle Z-axis (degrees) - Yaw
   statusFlags: number;    // Status bitmask
 }
 
@@ -55,9 +55,9 @@ export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
       temperature: parseFloat(values[3]),
       voltage: parseFloat(values[4]),
       accelY: parseFloat(values[5]),
-      gyroX: parseFloat(values[6]),
-      gyroY: parseFloat(values[7]),
-      gyroZ: parseFloat(values[8]),
+      angleX: parseFloat(values[6]),
+      angleY: parseFloat(values[7]),
+      angleZ: parseFloat(values[8]),
       statusFlags: parseInt(values[9])
     };
   } catch (error) {

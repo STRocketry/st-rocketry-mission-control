@@ -8,40 +8,26 @@ import { Plane, RotateCcw, Plus, Minus } from 'lucide-react';
 import * as THREE from 'three';
 
 interface RocketMeshProps {
-  gyroX: number;
-  gyroY: number;
-  gyroZ: number;
+  angleX: number;
+  angleY: number;
+  angleZ: number;
 }
 
 const RocketMesh: React.FC<RocketMeshProps> = ({
-  gyroX,
-  gyroY,
-  gyroZ
+  angleX,
+  angleY,
+  angleZ
 }) => {
   const rocketRef = useRef<THREE.Group>(null);
-  const rotationVelocity = useRef({
-    x: 0,
-    y: 0,
-    z: 0
-  });
 
   useEffect(() => {
-    // Update rotation velocities (convert deg/s to rad/s)
-    rotationVelocity.current = {
-      x: gyroX * Math.PI / 180,
-      y: gyroY * Math.PI / 180,
-      z: gyroZ * Math.PI / 180
-    };
-  }, [gyroX, gyroY, gyroZ]);
-
-  useFrame((state, delta) => {
     if (rocketRef.current) {
-      // Apply rotation based on gyro data
-      rocketRef.current.rotation.x += rotationVelocity.current.x * delta;
-      rocketRef.current.rotation.y += rotationVelocity.current.y * delta;
-      rocketRef.current.rotation.z += rotationVelocity.current.z * delta;
+      // Apply absolute rotation angles (convert degrees to radians)
+      rocketRef.current.rotation.x = angleX * Math.PI / 180;
+      rocketRef.current.rotation.y = angleY * Math.PI / 180;
+      rocketRef.current.rotation.z = angleZ * Math.PI / 180;
     }
-  });
+  }, [angleX, angleY, angleZ]);
 
   return (
     <group ref={rocketRef}>
@@ -98,9 +84,9 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
   data,
   isLive
 }) => {
-  const gyroX = data?.gyroX || 0;
-  const gyroY = data?.gyroY || 0;
-  const gyroZ = data?.gyroZ || 0;
+  const angleX = data?.angleX || 0;
+  const angleY = data?.angleY || 0;
+  const angleZ = data?.angleZ || 0;
   const [cameraDistance, setCameraDistance] = useState(6);
 
   const handleZoomIn = () => {
@@ -133,7 +119,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
             >
               <ambientLight intensity={0.6} />
               <directionalLight position={[10, 10, 5]} intensity={0.8} />
-              <RocketMesh gyroX={gyroX} gyroY={gyroY} gyroZ={gyroZ} />
+              <RocketMesh angleX={angleX} angleY={angleY} angleZ={angleZ} />
               {/* Axis helpers */}
               <axesHelper args={[2]} />
             </Canvas>
@@ -152,9 +138,9 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
           {/* Gyro Data Readouts - без рамок, уже */}
           <div className="space-y-4">
             <h4 className="font-semibold text-xs text-muted-foreground mb-2 text-center">
-              ANGULAR
+              ROTATION
               <br />
-              VELOCITIES
+              ANGLES
             </h4>
             
             <div className="space-y-3">
@@ -165,7 +151,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
                   <span className="font-medium text-xs">Roll (X)</span>
                 </div>
                 <span className="font-mono text-lg font-bold block">
-                  {gyroX.toFixed(1)}°/s
+                  {angleX.toFixed(1)}°
                 </span>
               </div>
 
@@ -176,7 +162,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
                   <span className="font-medium text-xs">Pitch (Y)</span>
                 </div>
                 <span className="font-mono text-lg font-bold block">
-                  {gyroY.toFixed(1)}°/s
+                  {angleY.toFixed(1)}°
                 </span>
               </div>
 
@@ -187,7 +173,7 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
                   <span className="font-medium text-xs">Yaw (Z)</span>
                 </div>
                 <span className="font-mono text-lg font-bold block">
-                  {gyroZ.toFixed(1)}°/s
+                  {angleZ.toFixed(1)}°
                 </span>
               </div>
             </div>
