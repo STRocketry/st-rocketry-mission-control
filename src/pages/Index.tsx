@@ -10,6 +10,7 @@ import { DateTimeDisplay } from "@/components/ui/date-time-display";
 import { VoiceAlerts } from "@/components/ui/voice-alerts";
 import { MissionButton } from "@/components/ui/mission-button";
 import { useSerialConnection } from "@/hooks/useSerialConnection";
+import { ConfigurableCommandPanel } from "@/components/telemetry/ConfigurableCommandPanel";
 import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ const Index = () => {
     flightTime,
     handleConnect,
     handleDisconnect,
+    sendCommand,
     clearData,
     clearRawData,
     exportData
@@ -90,6 +92,12 @@ const Index = () => {
 
             {/* 3D Rocket Visualization */}
             <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
+
+            {/* Configurable Command Panel */}
+            <ConfigurableCommandPanel 
+              onSendCommand={sendCommand}
+              isConnected={isConnected && connectionStatus === 'connected'}
+            />
 
             <SystemStatusPanel data={currentData} />
 

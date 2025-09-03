@@ -153,6 +153,31 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     }
   }, [speakFunction, lastStatusFlags, maxAltitudeAnnounced]);
 
+  const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
+    if (!portRef.current || !isConnected) {
+      toast.error("Not connected to serial port");
+      return;
+    }
+
+    try {
+      const writer = portRef.current.writable.getWriter();
+      
+      for (let i = 0; i < count; i++) {
+        const data = new TextEncoder().encode(command + '\n');
+        await writer.write(data);
+        
+        if (i < count - 1) {
+          await new Promise(resolve => setTimeout(resolve, intervalMs));
+        }
+      }
+      
+      writer.releaseLock();
+    } catch (error) {
+      console.error('Error sending command:', error);
+      toast.error(`Failed to send command: ${error}`);
+    }
+  }, [isConnected]);
+
   const handleDisconnect = useCallback(async () => {
     try {
       if (readerRef.current) {
@@ -267,6 +292,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     flightState,
     handleConnect,
     handleDisconnect,
+    sendCommand,
     clearData,
     clearRawData,
     exportData
