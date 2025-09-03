@@ -43,40 +43,40 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
         <meshPhongMaterial color="#ffffff" />
       </mesh>
       
-      {/* Fins - triangular shaped stabilizers */}
-      {/* Right fin (X+) */}
-      <mesh position={[0.3, -1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.2, 0.4, 3]} />
+      {/* Fins - vertical fins attached to rocket body */}
+      {/* Right fin (X+) - vertical fin */}
+      <mesh position={[0.3, -1.0, 0]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.05, 0.4, 0.6]} />
         <meshPhongMaterial color="#ff0000" />
       </mesh>
       
-      {/* Left fin (X-) */}
-      <mesh position={[-0.3, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <coneGeometry args={[0.2, 0.4, 3]} />
+      {/* Left fin (X-) - vertical fin */}
+      <mesh position={[-0.3, -1.0, 0]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.05, 0.4, 0.6]} />
         <meshPhongMaterial color="#00ff00" />
       </mesh>
       
-      {/* Front fin (Z+) */}
-      <mesh position={[0, -1.2, 0.3]} rotation={[Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.2, 0.4, 3]} />
+      {/* Front fin (Z+) - vertical fin */}
+      <mesh position={[0, -1.0, 0.3]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.6, 0.4, 0.05]} />
         <meshPhongMaterial color="#0000ff" />
       </mesh>
       
-      {/* Back fin (Z-) */}
-      <mesh position={[0, -1.2, -0.3]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.2, 0.4, 3]} />
+      {/* Back fin (Z-) - vertical fin */}
+      <mesh position={[0, -1.0, -0.3]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.6, 0.4, 0.05]} />
         <meshPhongMaterial color="#ff8800" />
       </mesh>
 
       {/* Axis labels */}
-      <Text position={[2.5, 0, 0]} fontSize={0.3} color="red" anchorX="left">
-        X
+      <Text position={[2, 0, 0]} fontSize={0.3} color="red" anchorX="left">
+        X (Roll)
       </Text>
-      <Text position={[0, 3, 0]} fontSize={0.3} color="green" anchorX="center">
-        Y
+      <Text position={[0, 2.5, 0]} fontSize={0.3} color="green" anchorX="center">
+        Y (Pitch)
       </Text>
-      <Text position={[0, 0, 2.5]} fontSize={0.3} color="blue" anchorX="center">
-        Z
+      <Text position={[0, 0, 2]} fontSize={0.3} color="blue" anchorX="center">
+        Z (Yaw)
       </Text>
     </group>
   );
@@ -131,8 +131,8 @@ const RocketVisualization: React.FC<RocketVisualizationProps> = ({
               <axesHelper args={[2]} />
             </Canvas>
             
-            {/* Zoom Controls - moved to bottom left to avoid overlap */}
-            <div className="absolute bottom-2 left-2 flex gap-1">
+            {/* Zoom Controls */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1">
               <Button size="sm" variant="outline" onClick={handleZoomIn} className="w-8 h-8 p-0">
                 <Plus className="h-4 w-4" />
               </Button>
