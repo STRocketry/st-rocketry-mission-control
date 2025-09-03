@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { ConnectionPanel } from "@/components/telemetry/ConnectionPanel";
 import { TelemetryGauges } from "@/components/telemetry/TelemetryGauges";
 import { AltitudeChart } from "@/components/telemetry/AltitudeChart";
-import { StatusPanel } from "@/components/telemetry/StatusPanel";
+import { FlightStatusPanel } from "@/components/telemetry/FlightStatusPanel";
+import { SystemStatusPanel } from "@/components/telemetry/SystemStatusPanel";
 import { RawDataPanel } from "@/components/telemetry/RawDataPanel";
 import RocketVisualization from "@/components/telemetry/RocketVisualization";
 import { DateTimeDisplay } from "@/components/ui/date-time-display";
@@ -85,10 +86,12 @@ const Index = () => {
               <ConnectionPanel onConnect={handleConnect} onDisconnect={handleDisconnect} isConnected={isConnected} connectionStatus={connectionStatus} />
             </div>
 
-            <StatusPanel data={currentData} isLive={isConnected && connectionStatus === 'connected'} flightTime={flightTime} dataPoints={telemetryData.length} />
+            <FlightStatusPanel data={currentData} isLive={isConnected && connectionStatus === 'connected'} flightTime={flightTime} dataPoints={telemetryData.length} />
 
             {/* 3D Rocket Visualization */}
             <RocketVisualization data={currentData} isLive={isConnected && connectionStatus === 'connected'} />
+
+            <SystemStatusPanel data={currentData} />
 
             {/* Data Export Controls - Now in a panel */}
             <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
