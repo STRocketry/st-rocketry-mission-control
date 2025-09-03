@@ -43,28 +43,28 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
         <meshPhongMaterial color="#ffffff" />
       </mesh>
       
-      {/* Fins - properly attached to rocket body */}
-      {/* Right fin (X+) */}
-      <mesh position={[0.35, -1.2, 0]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[0.6, 0.05, 0.8]} />
+      {/* Fins - vertical fins attached to rocket body */}
+      {/* Right fin (X+) - vertical fin */}
+      <mesh position={[0.3, -1.0, 0]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.05, 0.4, 0.6]} />
         <meshPhongMaterial color="#ff0000" />
       </mesh>
       
-      {/* Left fin (X-) */}
-      <mesh position={[-0.35, -1.2, 0]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[0.6, 0.05, 0.8]} />
+      {/* Left fin (X-) - vertical fin */}
+      <mesh position={[-0.3, -1.0, 0]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.05, 0.4, 0.6]} />
         <meshPhongMaterial color="#00ff00" />
       </mesh>
       
-      {/* Front fin (Z+) */}
-      <mesh position={[0, -1.2, 0.35]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[0.8, 0.05, 0.6]} />
+      {/* Front fin (Z+) - vertical fin */}
+      <mesh position={[0, -1.0, 0.3]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.6, 0.4, 0.05]} />
         <meshPhongMaterial color="#0000ff" />
       </mesh>
       
-      {/* Back fin (Z-) */}
-      <mesh position={[0, -1.2, -0.35]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[0.8, 0.05, 0.6]} />
+      {/* Back fin (Z-) - vertical fin */}
+      <mesh position={[0, -1.0, -0.3]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.6, 0.4, 0.05]} />
         <meshPhongMaterial color="#ff8800" />
       </mesh>
 
