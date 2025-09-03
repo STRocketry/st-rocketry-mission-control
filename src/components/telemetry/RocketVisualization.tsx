@@ -44,19 +44,26 @@ const RocketMesh: React.FC<RocketMeshProps> = ({
       </mesh>
       
       {/* Fins - properly attached to rocket body */}
-      <mesh position={[0.35, -1.2, 0]} rotation={[0, 0, Math.PI / 4]}>
+      {/* Right fin (X+) */}
+      <mesh position={[0.35, -1.2, 0]} rotation={[0, 0, 0]}>
         <boxGeometry args={[0.6, 0.05, 0.8]} />
         <meshPhongMaterial color="#ff0000" />
       </mesh>
-      <mesh position={[-0.35, -1.2, 0]} rotation={[0, 0, -Math.PI / 4]}>
+      
+      {/* Left fin (X-) */}
+      <mesh position={[-0.35, -1.2, 0]} rotation={[0, 0, 0]}>
         <boxGeometry args={[0.6, 0.05, 0.8]} />
         <meshPhongMaterial color="#00ff00" />
       </mesh>
-      <mesh position={[0, -1.2, 0.35]} rotation={[Math.PI / 4, 0, 0]}>
+      
+      {/* Front fin (Z+) */}
+      <mesh position={[0, -1.2, 0.35]} rotation={[0, 0, 0]}>
         <boxGeometry args={[0.8, 0.05, 0.6]} />
         <meshPhongMaterial color="#0000ff" />
       </mesh>
-      <mesh position={[0, -1.2, -0.35]} rotation={[-Math.PI / 4, 0, 0]}>
+      
+      {/* Back fin (Z-) */}
+      <mesh position={[0, -1.2, -0.35]} rotation={[0, 0, 0]}>
         <boxGeometry args={[0.8, 0.05, 0.6]} />
         <meshPhongMaterial color="#ff8800" />
       </mesh>
