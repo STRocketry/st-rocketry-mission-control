@@ -35,6 +35,16 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     return { variant: "secondary" as const, text: "NO DATA" };
   };
 
+  // System status logic based on text messages
+  const getSystemStatus = () => {
+    const hasSystemReady = textMessages.some(msg => msg.includes("SYSTEM: READY"));
+    const hasError = textMessages.some(msg => msg.includes("ERR:"));
+    
+    if (hasError) return { variant: "destructive" as const, text: "ERROR" };
+    if (hasSystemReady) return { variant: "default" as const, text: "READY" };
+    return { variant: "secondary" as const, text: "NO DATA" };
+  };
+
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-4">ROCKET STATUS</h3>
@@ -77,8 +87,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
         
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">SYSTEM:</span>
-          <Badge {...getStatusBadge(flags?.systemReady, "READY", "ERROR", true)}>
-            {getStatusBadge(flags?.systemReady, "READY", "ERROR", true).text}
+          <Badge {...getSystemStatus()}>
+            {getSystemStatus().text}
           </Badge>
         </div>
         
