@@ -99,7 +99,7 @@ const Index = () => {
               isConnected={isConnected && connectionStatus === 'connected'}
             />
 
-            <SystemStatusPanel data={currentData} />
+            <SystemStatusPanel data={currentData} textMessages={textMessages} />
 
             {/* Data Export Controls - Now in a panel */}
             <div className="bg-card rounded-lg border border-border p-4 shadow-sm">

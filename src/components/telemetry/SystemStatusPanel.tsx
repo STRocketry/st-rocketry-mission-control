@@ -4,9 +4,10 @@ import { TelemetryData, parseStatusFlags } from "@/types/telemetry";
 
 interface SystemStatusPanelProps {
   data: TelemetryData | null;
+  textMessages: string[];
 }
 
-export const SystemStatusPanel = ({ data }: SystemStatusPanelProps) => {
+export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps) => {
   const flags = data ? parseStatusFlags(data.statusFlags) : null;
 
   // Helper function to determine badge variant and status text
@@ -24,6 +25,16 @@ export const SystemStatusPanel = ({ data }: SystemStatusPanelProps) => {
     };
   };
 
+  // Sensor status logic based on text messages
+  const getSensorStatus = (sensorName: string) => {
+    const hasSystemReady = textMessages.some(msg => msg.includes("SYSTEM: READY"));
+    const hasError = textMessages.some(msg => msg.includes(`ERR:${sensorName}_INIT`));
+    
+    if (hasError) return { variant: "destructive" as const, text: "ERROR" };
+    if (hasSystemReady) return { variant: "default" as const, text: "OK" };
+    return { variant: "secondary" as const, text: "NO DATA" };
+  };
+
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-4">ROCKET STATUS</h3>
@@ -38,15 +49,15 @@ export const SystemStatusPanel = ({ data }: SystemStatusPanelProps) => {
         
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">BMP180:</span>
-          <Badge {...getStatusBadge(flags?.bmp180OK, "OK", "ERROR", true)}>
-            {getStatusBadge(flags?.bmp180OK, "OK", "ERROR", true).text}
+          <Badge {...getSensorStatus("BMP180")}>
+            {getSensorStatus("BMP180").text}
           </Badge>
         </div>
         
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">MPU6050:</span>
-          <Badge {...getStatusBadge(flags?.mpu6050OK, "OK", "ERROR", true)}>
-            {getStatusBadge(flags?.mpu6050OK, "OK", "ERROR", true).text}
+          <Badge {...getSensorStatus("MPU6050")}>
+            {getSensorStatus("MPU6050").text}
           </Badge>
         </div>
         
