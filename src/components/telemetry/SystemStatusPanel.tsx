@@ -47,11 +47,11 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
-      <h3 className="text-lg font-bold mb-6 text-center">SYSTEM STATUS</h3>
+      <h3 className="text-lg font-bold mb-6">SYSTEM STATUS</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Memory & Sensors Column */}
-        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">EEPROM:</span>
             <Badge {...getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED")}>
@@ -74,8 +74,13 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
           </div>
         </div>
         
+        {/* Vertical divider */}
+        <div className="hidden md:flex justify-center">
+          <div className="w-px h-full bg-border/50" />
+        </div>
+
         {/* System Status Column */}
-        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">SERVO:</span>
             <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
@@ -97,9 +102,14 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
             </Badge>
           </div>
         </div>
-        
+
+        {/* Vertical divider */}
+        <div className="hidden md:flex justify-center">
+          <div className="w-px h-full bg-border/50" />
+        </div>
+
         {/* Flight Events Column */}
-        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Launch:</span>
             <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
