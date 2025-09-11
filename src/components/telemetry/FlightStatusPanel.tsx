@@ -17,21 +17,19 @@ export const FlightStatusPanel = ({
   dataPoints
 }: FlightStatusPanelProps) => {
   const getFlightPhase = (statusFlags: number) => {
-    if (statusFlags & 128) return {
-      phase: "CRITICAL ERROR",
-      color: "text-mission-critical",
-      icon: AlertTriangle
-    };
+    // Bit 3 (8): Parachute Deployed
     if (statusFlags & 8) return {
       phase: "RECOVERY",
       color: "text-mission-success",
       icon: Umbrella
     };
+    // Bit 1 (2): Launch Detected
     if (statusFlags & 2) return {
       phase: "POWERED FLIGHT",
       color: "text-mission-warning",
       icon: Rocket
     };
+    // Default state
     return {
       phase: "STANDBY",
       color: "text-mission-neutral",
