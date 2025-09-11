@@ -49,9 +49,9 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-6">SYSTEM STATUS</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         {/* Memory & Sensors Column */}
-        <div className="space-y-3">
+        <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">EEPROM:</span>
             <Badge {...getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED")}>
@@ -80,7 +80,7 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
         </div>
 
         {/* System Status Column */}
-        <div className="space-y-3">
+        <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">SERVO:</span>
             <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
@@ -109,7 +109,7 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
         </div>
 
         {/* Flight Events Column */}
-        <div className="space-y-3">
+        <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Launch:</span>
             <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
