@@ -49,68 +49,77 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-4">ROCKET STATUS</h3>
       
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">EEPROM:</span>
-          <Badge {...getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED")}>
-            {getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED").text}
-          </Badge>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Column 1 */}
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">EEPROM:</span>
+            <Badge {...getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED")}>
+              {getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">BMP180:</span>
+            <Badge {...getSensorStatus("BMP180")}>
+              {getSensorStatus("BMP180").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">MPU6050:</span>
+            <Badge {...getSensorStatus("MPU6050")}>
+              {getSensorStatus("MPU6050").text}
+            </Badge>
+          </div>
         </div>
         
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">BMP180:</span>
-          <Badge {...getSensorStatus("BMP180")}>
-            {getSensorStatus("BMP180").text}
-          </Badge>
+        {/* Column 2 */}
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">SERVO:</span>
+            <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
+              {getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">CALIB:</span>
+            <Badge {...getStatusBadge(flags?.calibDone, "DONE", "EMPTY")}>
+              {getStatusBadge(flags?.calibDone, "DONE", "EMPTY").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">SYSTEM:</span>
+            <Badge {...getSystemStatus()}>
+              {getSystemStatus().text}
+            </Badge>
+          </div>
         </div>
         
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">MPU6050:</span>
-          <Badge {...getSensorStatus("MPU6050")}>
-            {getSensorStatus("MPU6050").text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">SERVO:</span>
-          <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
-            {getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED").text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">CALIB:</span>
-          <Badge {...getStatusBadge(flags?.calibDone, "DONE", "EMPTY")}>
-            {getStatusBadge(flags?.calibDone, "DONE", "EMPTY").text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">SYSTEM:</span>
-          <Badge {...getSystemStatus()}>
-            {getSystemStatus().text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">Launch:</span>
-          <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
-            {getStatusBadge(flags?.launchDetected, "DETECTED", "NO").text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">Hatch:</span>
-          <Badge {...getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED")}>
-            {getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED").text}
-          </Badge>
-        </div>
-        
-        <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">Parachute:</span>
-          <Badge {...getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE")}>
-            {getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE").text}
-          </Badge>
+        {/* Column 3 */}
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Launch:</span>
+            <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
+              {getStatusBadge(flags?.launchDetected, "DETECTED", "NO").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Hatch:</span>
+            <Badge {...getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED")}>
+              {getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED").text}
+            </Badge>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Parachute:</span>
+            <Badge {...getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE")}>
+              {getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE").text}
+            </Badge>
+          </div>
         </div>
       </div>
     </Card>
