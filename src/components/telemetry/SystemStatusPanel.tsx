@@ -49,7 +49,7 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-6">SYSTEM STATUS</h3>
       
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16">
         {/* Memory & Sensors Column */}
         <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
