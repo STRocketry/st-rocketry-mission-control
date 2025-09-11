@@ -24,19 +24,27 @@ export interface FlightSession {
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface StatusFlags {
-  servoOpen: boolean;           // 0b00000001 (1) - Servo position
-  launchDetected: boolean;      // 0b00000010 (2) - Launch detected
-  hatchOpen: boolean;           // 0b00000100 (4) - Hatch status
-  parachuteDeployed: boolean;   // 0b00001000 (8) - Parachute deployed
-  criticalError: boolean;       // 0b10000000 (128) - Critical error
+  eepromEnabled: boolean;       // 0b000000001 (1) - EEPROM enabled
+  bmp180OK: boolean;           // 0b000000010 (2) - BMP180 sensor OK
+  mpu6050OK: boolean;          // 0b000000100 (4) - MPU6050 sensor OK
+  servoOpen: boolean;          // 0b000001000 (8) - Servo position
+  calibDone: boolean;          // 0b000010000 (16) - Calibration complete
+  systemReady: boolean;        // 0b000100000 (32) - System ready
+  launchDetected: boolean;     // 0b001000000 (64) - Launch detected
+  hatchOpen: boolean;          // 0b010000000 (128) - Hatch status
+  parachuteDeployed: boolean;  // 0b100000000 (256) - Parachute deployed
 }
 
 export const parseStatusFlags = (flags: number): StatusFlags => ({
-  servoOpen: !!(flags & 1),          // 0b00000001 (1) - Servo position (0=closed, 1=open)
-  launchDetected: !!(flags & 2),     // 0b00000010 (2) - Launch detected (1=launched)
-  hatchOpen: !!(flags & 4),          // 0b00000100 (4) - Hatch status (0=closed, 1=open)
-  parachuteDeployed: !!(flags & 8),  // 0b00001000 (8) - Parachute deployed (1=deployed)
-  criticalError: !!(flags & 128)     // 0b10000000 (128) - Critical error
+  eepromEnabled: !!(flags & 1),      // 0b000000001 (1) - EEPROM enabled
+  bmp180OK: !!(flags & 2),           // 0b000000010 (2) - BMP180 sensor OK
+  mpu6050OK: !!(flags & 4),          // 0b000000100 (4) - MPU6050 sensor OK
+  servoOpen: !!(flags & 8),          // 0b000001000 (8) - Servo position (0=closed, 1=open)
+  calibDone: !!(flags & 16),         // 0b000010000 (16) - Calibration complete
+  systemReady: !!(flags & 32),       // 0b000100000 (32) - System ready
+  launchDetected: !!(flags & 64),    // 0b001000000 (64) - Launch detected (1=launched)
+  hatchOpen: !!(flags & 128),        // 0b010000000 (128) - Hatch status (0=closed, 1=open)
+  parachuteDeployed: !!(flags & 256) // 0b100000000 (256) - Parachute deployed (1=deployed)
 });
 
 export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
