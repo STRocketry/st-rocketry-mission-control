@@ -12,7 +12,7 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   // Helper function to determine badge variant and status text
   const getStatusBadge = (condition: boolean | null, trueText: string, falseText: string, useErrorVariant = false) => {
-    if (condition === null) return { variant: "secondary" as const, text: "N/A" };
+    if (condition === null) return { variant: "secondary" as const, text: "NO DATA" };
     if (useErrorVariant) {
       return {
         variant: condition ? "default" as const : "destructive" as const,
