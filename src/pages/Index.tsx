@@ -75,6 +75,9 @@ const Index = () => {
               <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
             </div>
 
+            {/* System Status Panel - Moved from right column */}
+            <SystemStatusPanel data={currentData} textMessages={textMessages} />
+
             {/* Raw Data Panel - Always visible */}
             <div>
               <RawDataPanel rawData={rawData} textMessages={textMessages} isLive={isConnected && connectionStatus === 'connected'} onClearData={clearRawData} />
@@ -98,8 +101,6 @@ const Index = () => {
               onSendCommand={sendCommand}
               isConnected={isConnected && connectionStatus === 'connected'}
             />
-
-            <SystemStatusPanel data={currentData} textMessages={textMessages} />
 
             {/* Data Export Controls - Now in a panel */}
             <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
