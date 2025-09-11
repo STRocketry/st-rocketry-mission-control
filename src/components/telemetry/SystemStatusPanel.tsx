@@ -47,75 +47,75 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
-      <h3 className="text-lg font-bold mb-4">ROCKET STATUS</h3>
+      <h3 className="text-lg font-bold mb-6 text-center">SYSTEM STATUS</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Column 1 */}
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">EEPROM:</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Memory & Sensors Column */}
+        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">EEPROM:</span>
             <Badge {...getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED")}>
               {getStatusBadge(flags?.eepromEnabled, "ENABLED", "DISABLED").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">BMP180:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">BMP180:</span>
             <Badge {...getSensorStatus("BMP180")}>
               {getSensorStatus("BMP180").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">MPU6050:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">MPU6050:</span>
             <Badge {...getSensorStatus("MPU6050")}>
               {getSensorStatus("MPU6050").text}
             </Badge>
           </div>
         </div>
         
-        {/* Column 2 */}
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">SERVO:</span>
+        {/* System Status Column */}
+        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">SERVO:</span>
             <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
               {getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">CALIB:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">CALIB:</span>
             <Badge {...getStatusBadge(flags?.calibDone, "DONE", "EMPTY")}>
               {getStatusBadge(flags?.calibDone, "DONE", "EMPTY").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">SYSTEM:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">SYSTEM:</span>
             <Badge {...getSystemStatus()}>
               {getSystemStatus().text}
             </Badge>
           </div>
         </div>
         
-        {/* Column 3 */}
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Launch:</span>
+        {/* Flight Events Column */}
+        <div className="space-y-4 p-4 rounded-lg border-2 border-border/30 bg-muted/10">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Launch:</span>
             <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
               {getStatusBadge(flags?.launchDetected, "DETECTED", "NO").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Hatch:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Hatch:</span>
             <Badge {...getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED")}>
               {getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED").text}
             </Badge>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Parachute:</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Parachute:</span>
             <Badge {...getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE")}>
               {getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE").text}
             </Badge>
