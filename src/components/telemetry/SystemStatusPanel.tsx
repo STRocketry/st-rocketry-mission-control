@@ -11,8 +11,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
   const flags = data ? parseStatusFlags(data.statusFlags) : null;
 
   // Helper function to determine badge variant and status text
-  const getStatusBadge = (condition: boolean | null, trueText: string, falseText: string, useErrorVariant = false) => {
-    if (condition === null) return { variant: "secondary" as const, text: "NO DATA" };
+  const getStatusBadge = (condition: boolean | null | undefined, trueText: string, falseText: string, useErrorVariant = false) => {
+    if (condition === null || condition === undefined) return { variant: "secondary" as const, text: "NO DATA" };
     if (useErrorVariant) {
       return {
         variant: condition ? "default" as const : "destructive" as const,
@@ -63,6 +63,11 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     return { variant: "secondary" as const, text: "NO DATA" };
   };
 
+  // Get status from flags with proper null handling
+  const getFlagStatus = (flag: boolean | null | undefined, trueText: string, falseText: string) => {
+    return getStatusBadge(flag, trueText, falseText);
+  };
+
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-6">SYSTEM STATUS</h3>
@@ -101,8 +106,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
         <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">SERVO:</span>
-            <Badge {...getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED")}>
-              {getStatusBadge(flags?.servoOpen, "OPEN", "CLOSED").text}
+            <Badge {...getFlagStatus(flags?.servoOpen, "OPEN", "CLOSED")}>
+              {getFlagStatus(flags?.servoOpen, "OPEN", "CLOSED").text}
             </Badge>
           </div>
           
@@ -130,22 +135,22 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
         <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Launch:</span>
-            <Badge {...getStatusBadge(flags?.launchDetected, "DETECTED", "NO")}>
-              {getStatusBadge(flags?.launchDetected, "DETECTED", "NO").text}
+            <Badge {...getFlagStatus(flags?.launchDetected, "DETECTED", "NO")}>
+              {getFlagStatus(flags?.launchDetected, "DETECTED", "NO").text}
             </Badge>
           </div>
           
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Hatch:</span>
-            <Badge {...getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED")}>
-              {getStatusBadge(flags?.hatchOpen, "OPENED", "CLOSED").text}
+            <Badge {...getFlagStatus(flags?.hatchOpen, "OPENED", "CLOSED")}>
+              {getFlagStatus(flags?.hatchOpen, "OPENED", "CLOSED").text}
             </Badge>
           </div>
           
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Parachute:</span>
-            <Badge {...getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE")}>
-              {getStatusBadge(flags?.parachuteDeployed, "DEPLOYED", "SAFE").text}
+            <Badge {...getFlagStatus(flags?.parachuteDeployed, "DEPLOYED", "SAFE")}>
+              {getFlagStatus(flags?.parachuteDeployed, "DEPLOYED", "SAFE").text}
             </Badge>
           </div>
         </div>
