@@ -55,6 +55,14 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
     return { variant: "secondary" as const, text: "NO DATA" };
   };
 
+  // CALIB status logic based on calibration messages
+  const getCalibStatus = () => {
+    const hasCalibData = textMessages.some(msg => msg.includes("CALIB:"));
+    
+    if (hasCalibData) return { variant: "default" as const, text: "OK" };
+    return { variant: "secondary" as const, text: "NO DATA" };
+  };
+
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
       <h3 className="text-lg font-bold mb-6">SYSTEM STATUS</h3>
@@ -100,8 +108,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
           
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">CALIB:</span>
-            <Badge {...getStatusBadge(flags?.calibDone, "DONE", "EMPTY")}>
-              {getStatusBadge(flags?.calibDone, "DONE", "EMPTY").text}
+            <Badge {...getCalibStatus()}>
+              {getCalibStatus().text}
             </Badge>
           </div>
           
