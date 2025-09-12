@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TelemetryData } from "@/types/telemetry";
+import { TelemetryData, parseStatusFlags } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
 
@@ -10,9 +10,10 @@ interface AltitudeChartProps {
   data: TelemetryData[];
   maxAltitude: number;
   isLive: boolean;
+  textMessages?: string[];
 }
 
-export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
+export const AltitudeChart = ({ data, maxAltitude, isLive, textMessages = [] }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<any>(null);
 
@@ -27,6 +28,30 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     current.altitude > max.altitude ? current : max, 
     data[0] || { altitude: 0, time: 0 }
   );
+
+  // Find apogee detection time from text messages
+  const apogeeDetectedTime = (() => {
+    const apogeeMessage = textMessages.find(msg => msg.includes("DEPLOY:AUTO: Apogee detected"));
+    if (!apogeeMessage || data.length === 0) return null;
+    
+    // Find the telemetry data point closest to when apogee was detected
+    // Since we don't have exact timestamps in messages, we'll use the max altitude point
+    return apogee.time / 1000; // Convert to seconds
+  })();
+
+  // Find parachute deployment time from status flags
+  const parachuteDeploymentTime = (() => {
+    for (let i = 1; i < data.length; i++) {
+      const prevFlags = parseStatusFlags(data[i - 1].statusFlags);
+      const currentFlags = parseStatusFlags(data[i].statusFlags);
+      
+      // Parachute just deployed (changed from false to true)
+      if (!prevFlags.parachuteDeployed && currentFlags.parachuteDeployed) {
+        return data[i].time / 1000; // Convert to seconds
+      }
+    }
+    return null;
+  })();
 
   const resetZoom = () => {
     setZoomDomain(null);
@@ -160,6 +185,30 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                   value: `APOGEE: ${apogee.altitude.toFixed(1)}m`, 
                   position: "top",
                   fontSize: 10
+                }}
+              />
+            )}
+            {apogeeDetectedTime && (
+              <ReferenceLine 
+                x={apogeeDetectedTime}
+                stroke="hsl(var(--mission-critical))" 
+                strokeWidth={2}
+                label={{ 
+                  value: "APOGEE DETECTED", 
+                  position: "top",
+                  fontSize: 9
+                }}
+              />
+            )}
+            {parachuteDeploymentTime && (
+              <ReferenceLine 
+                x={parachuteDeploymentTime}
+                stroke="hsl(var(--mission-success))" 
+                strokeWidth={2}
+                label={{ 
+                  value: "PARACHUTE DEPLOYED", 
+                  position: "bottom",
+                  fontSize: 9
                 }}
               />
             )}

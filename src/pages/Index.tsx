@@ -72,7 +72,7 @@ const Index = () => {
 
             {/* Altitude Chart */}
             <div className="w-full">
-              <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
+              <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} textMessages={textMessages} />
             </div>
 
             {/* System Status Panel - Moved from right column */}
