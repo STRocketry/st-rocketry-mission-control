@@ -21,7 +21,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
     data.map(d => ({
-      time: d.time / 1000, // Convert to seconds for better readability
+      time: d.time / 1000,
       altitude: d.altitude,
       maxAltitude: d.maxAltitude,
       accelY: d.accelY
@@ -55,14 +55,25 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     return [`${value.toFixed(1)}m`, 'Max Altitude'];
   };
 
-  // Format Y-axis ticks based on scale
-  const formatYAxisTick = (value: number) => {
-    if (yAxisScale >= 100) {
-      return `${Math.round(value / yAxisScale) * yAxisScale}m`;
-    } else if (yAxisScale >= 10) {
-      return `${Math.round(value / yAxisScale) * yAxisScale}m`;
+  // Calculate Y-axis domain based on scale
+  const getYAxisDomain = () => {
+    if (data.length === 0) return [0, 100];
+    
+    const maxAlt = Math.max(...data.map(d => d.altitude));
+    const roundedMax = Math.ceil(maxAlt / yAxisScale) * yAxisScale;
+    return [0, roundedMax];
+  };
+
+  // Generate ticks based on scale
+  const getYAxisTicks = () => {
+    const [min, max] = getYAxisDomain();
+    const ticks = [];
+    
+    for (let i = min; i <= max; i += yAxisScale) {
+      ticks.push(i);
     }
-    return `${value}m`;
+    
+    return ticks;
   };
 
   return (
@@ -163,8 +174,9 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               yAxisId="altitude"
               stroke="hsl(var(--primary))"
               fontSize={10}
-              tickFormatter={formatYAxisTick}
-              interval={yAxisScale > 1 ? Math.ceil(yAxisScale / 5) : 'preserveStartEnd'}
+              tickFormatter={(value) => `${value}m`}
+              domain={getYAxisDomain()}
+              ticks={getYAxisTicks()}
             />
             
             {showAcceleration && (
@@ -174,6 +186,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 stroke="hsl(var(--mission-warning))"
                 fontSize={10}
                 tickFormatter={(value) => `${value}g`}
+                domain={[-20, 20]} // Fixed range for acceleration
               />
             )}
             
