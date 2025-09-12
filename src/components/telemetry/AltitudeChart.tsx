@@ -24,12 +24,15 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     accelY: d.accelY
   }));
 
-  const apogee = data.reduce((max, current) => 
-    current.altitude > max.altitude ? current : max, 
-    data[0] || { altitude: 0, time: 0 }
-  );
+  // Safe apogee calculation with null check
+  const apogee = data.length > 0 
+    ? data.reduce((max, current) => 
+        current.altitude > max.altitude ? current : max, 
+        data[0]
+      )
+    : null;
 
-  // Find parachute deployment time
+  // Find parachute deployment time with null safety
   const parachuteDeployment = data.find(d => {
     const flags = parseStatusFlags(d.statusFlags);
     return flags.parachuteDeployed;
