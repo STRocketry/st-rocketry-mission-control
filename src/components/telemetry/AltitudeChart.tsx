@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,8 @@ interface AltitudeChartProps {
 export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
-  const [yAxisScale, setYAxisScale] = useState<number>(1);
+  const [yAxisScale, setYAxisScale] = useState<number>(5); // Дефолтный масштаб 5м
+  const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false); // Флаг автомасштабирования
 
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
@@ -38,14 +39,41 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
+  // Эффект для проверки выхода данных за пределы масштаба
+  useEffect(() => {
+    if (data.length === 0 || isAutoScaled) return;
+
+    const currentMaxY = yAxisScale;
+    const margin = yAxisScale * 0.1; // Запас 10% от текущего масштаба
+    
+    // Проверяем, вышли ли данные за пределы текущего масштаба
+    const dataExceedsScale = data.some(d => d.altitude > currentMaxY + margin);
+    
+    if (dataExceedsScale) {
+      setIsAutoScaled(true); // Включаем автомасштаб
+    }
+  }, [data, yAxisScale, isAutoScaled]);
+
   const resetZoom = () => {
     setZoomDomain(null);
+  };
+
+  const handleResetView = () => {
+    setZoomDomain(null);
+    setIsAutoScaled(false); // Возвращаем к фиксированному масштабу
   };
 
   const handleMouseDown = (e: any) => {
     if (e?.activeLabel !== undefined) {
       setZoomDomain({ left: e.activeLabel, right: e.activeLabel });
     }
+  };
+
+  // Обработчик изменения масштаба
+  const handleScaleChange = (value: string) => {
+    const newScale = Number(value);
+    setYAxisScale(newScale);
+    setIsAutoScaled(false); // При ручном изменении масштаба отключаем автомасштаб
   };
 
   // Format tooltip values
@@ -55,25 +83,46 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     return [`${value.toFixed(1)}m`, 'Max Altitude'];
   };
 
-  // Calculate Y-axis domain based on scale
+  // Calculate Y-axis domain based on scale and auto-scale mode
   const getYAxisDomain = () => {
     if (data.length === 0) return [0, 100];
     
-    const maxAlt = Math.max(...data.map(d => d.altitude));
-    const roundedMax = Math.ceil(maxAlt / yAxisScale) * yAxisScale;
-    return [0, roundedMax];
+    if (isAutoScaled) {
+      // Режим автомасштаба - используем данные
+      const maxAlt = Math.max(...data.map(d => d.altitude));
+      const roundedMax = Math.ceil(maxAlt / 50) * 50; // Округляем до 50м для красоты
+      return [0, Math.max(roundedMax, 100)]; // Минимум 100м
+    } else {
+      // Фиксированный масштаб
+      return [0, yAxisScale];
+    }
   };
 
   // Generate ticks based on scale
   const getYAxisTicks = () => {
     const [min, max] = getYAxisDomain();
-    const ticks = [];
     
-    for (let i = min; i <= max; i += yAxisScale) {
-      ticks.push(i);
+    if (isAutoScaled) {
+      // Для автомасштаба генерируем деления динамически
+      const step = Math.ceil((max - min) / 5 / 50) * 50; // Округляем до 50м
+      const ticks = [];
+      
+      for (let i = min; i <= max; i += step) {
+        ticks.push(i);
+      }
+      
+      return ticks;
+    } else {
+      // Для фиксированного масштаба - равномерные деления
+      const ticks = [];
+      const step = yAxisScale / 5; // 5 делений на шкале
+      
+      for (let i = min; i <= max; i += step) {
+        ticks.push(i);
+      }
+      
+      return ticks;
     }
-    
-    return ticks;
   };
 
   return (
@@ -100,6 +149,11 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               MAX: {maxAltitude.toFixed(1)}m
             </span>
           </div>
+          {isAutoScaled && (
+            <Badge variant="outline" className="text-xs bg-mission-warning/20">
+              AUTO SCALE
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -119,10 +173,10 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
         <Button
           variant="outline"
           size="sm"
-          onClick={resetZoom}
-          disabled={!zoomDomain}
+          onClick={handleResetView}
+          disabled={!zoomDomain && !isAutoScaled}
           className="text-xs"
-          aria-label="Reset zoom"
+          aria-label="Reset view"
         >
           <RotateCcw className="h-3 w-3 mr-1" />
           Reset View
@@ -130,7 +184,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
 
         <div className="flex items-center gap-2">
           <Ruler className="h-3 w-3 text-muted-foreground" />
-          <Select value={yAxisScale.toString()} onValueChange={(value) => setYAxisScale(Number(value))}>
+          <Select value={yAxisScale.toString()} onValueChange={handleScaleChange}>
             <SelectTrigger className="h-8 w-20 text-xs">
               <SelectValue />
             </SelectTrigger>
