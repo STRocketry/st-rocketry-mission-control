@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,26 +14,48 @@ interface AltitudeChartProps {
 
 export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
-  const [zoomDomain, setZoomDomain] = useState<any>(null);
+  const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
 
-  const chartData = data.map(d => ({
-    time: d.time / 1000, // Convert to seconds for better readability
-    altitude: d.altitude,
-    maxAltitude: d.maxAltitude,
-    accelY: d.accelY
-  }));
-
-  const apogee = data.reduce((max, current) => 
-    current.altitude > max.altitude ? current : max, 
-    data[0] || { altitude: 0, time: 0 }
+  // Memoized chart data for better performance
+  const chartData = useMemo(() => 
+    data.map(d => ({
+      time: d.time / 1000, // Convert to seconds for better readability
+      altitude: d.altitude,
+      maxAltitude: d.maxAltitude,
+      accelY: d.accelY
+    })),
+    [data]
   );
+
+  // Safe apogee calculation with empty array handling
+  const apogee = useMemo(() => {
+    if (data.length === 0) return null;
+    return data.reduce((max, current) => 
+      current.altitude > max.altitude ? current : max, 
+      data[0]
+    );
+  }, [data]);
 
   const resetZoom = () => {
     setZoomDomain(null);
   };
 
+  const handleMouseDown = (e: any) => {
+    if (e?.activeLabel !== undefined) {
+      setZoomDomain({ left: e.activeLabel, right: e.activeLabel });
+    }
+  };
+
+  // Format tooltip values
+  const formatTooltip = (value: number, name: string) => {
+    if (name === 'altitude') return [`${value.toFixed(1)}m`, 'Altitude'];
+    if (name === 'accelY') return [`${value.toFixed(2)}g`, 'Y-Acceleration'];
+    return [`${value.toFixed(1)}m`, 'Max Altitude'];
+  };
+
   return (
     <Card className="p-4 lg:p-6 bg-card/50 backdrop-blur-sm border-primary/20">
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3">
           <Activity className="h-6 w-6 text-primary" />
@@ -58,12 +80,14 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
         </div>
       </div>
 
+      {/* Controls */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowAcceleration(!showAcceleration)}
           className="text-xs"
+          aria-label="Toggle acceleration display"
         >
           {showAcceleration ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
           Y-Accel
@@ -75,24 +99,27 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
           onClick={resetZoom}
           disabled={!zoomDomain}
           className="text-xs"
+          aria-label="Reset zoom"
         >
           <RotateCcw className="h-3 w-3 mr-1" />
           Reset View
         </Button>
       </div>
 
+      {/* Chart */}
       <div className="h-[300px] lg:h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={chartData} 
             margin={{ top: 5, right: showAcceleration ? 50 : 30, left: 20, bottom: 5 }}
-            onMouseDown={(e) => {
-              if (e && e.activeLabel !== undefined) {
-                setZoomDomain({ left: e.activeLabel, right: e.activeLabel });
-              }
-            }}
+            onMouseDown={handleMouseDown}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="hsl(var(--border))" 
+              opacity={0.3} 
+            />
+            
             <XAxis 
               dataKey="time" 
               stroke="hsl(var(--muted-foreground))"
@@ -100,12 +127,14 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               tickFormatter={(value) => `${value}s`}
               domain={zoomDomain ? [zoomDomain.left, zoomDomain.right] : ['dataMin', 'dataMax']}
             />
+            
             <YAxis 
               yAxisId="altitude"
               stroke="hsl(var(--primary))"
               fontSize={10}
               tickFormatter={(value) => `${value}m`}
             />
+            
             {showAcceleration && (
               <YAxis 
                 yAxisId="accel"
@@ -115,6 +144,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 tickFormatter={(value) => `${value}g`}
               />
             )}
+            
             <Tooltip 
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
@@ -123,13 +153,11 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 color: 'hsl(var(--foreground))',
                 fontSize: '12px'
               }}
-              formatter={(value: number, name: string) => {
-                if (name === 'altitude') return [`${value.toFixed(1)}m`, 'Altitude'];
-                if (name === 'accelY') return [`${value.toFixed(2)}g`, 'Y-Acceleration'];
-                return [`${value.toFixed(1)}m`, 'Max Altitude'];
-              }}
+              formatter={formatTooltip}
               labelFormatter={(value) => `Time: ${value}s`}
             />
+            
+            {/* Altitude Line */}
             <Line 
               yAxisId="altitude"
               type="monotone" 
@@ -139,6 +167,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               dot={false}
               activeDot={{ r: 3, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
             />
+            
+            {/* Acceleration Line */}
             {showAcceleration && (
               <Line 
                 yAxisId="accel"
@@ -150,6 +180,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 activeDot={{ r: 3, stroke: 'hsl(var(--mission-warning))', strokeWidth: 2 }}
               />
             )}
+            
+            {/* Apogee Reference Line */}
             {apogee && apogee.altitude > 0 && (
               <ReferenceLine 
                 yAxisId="altitude"
@@ -167,6 +199,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
         </ResponsiveContainer>
       </div>
       
+      {/* Empty State */}
       {data.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm">
           <div className="text-center">
