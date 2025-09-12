@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TelemetryData } from "@/types/telemetry";
-import { parseStatusFlags } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
 
@@ -11,10 +10,9 @@ interface AltitudeChartProps {
   data: TelemetryData[];
   maxAltitude: number;
   isLive: boolean;
-  textMessages: string[]; // Добавляем проп для текстовых сообщений
 }
 
-export const AltitudeChart = ({ data, maxAltitude, isLive, textMessages }: AltitudeChartProps) => {
+export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<any>(null);
 
@@ -25,34 +23,10 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, textMessages }: Altit
     accelY: d.accelY
   }));
 
-  // Safe apogee calculation
-  const apogee = data.length > 0 
-    ? data.reduce((max, current) => 
-        current.altitude > max.altitude ? current : max, 
-        data[0]
-      )
-    : null;
-
-  // Find apogee detection time from text messages
-  const apogeeDetection = data.find(d => {
-    // Ищем сообщение о обнаружении апогея
-    const hasApogeeMessage = textMessages.some(msg => 
-      msg.includes('DEPLOY:AUTO: Apogee detected') || msg.includes('Apogee detected')
-    );
-    return hasApogeeMessage && d.time;
-  });
-
-  // Safe parachute deployment detection
-  const parachuteDeployment = data.length > 0 
-    ? data.find(d => {
-        try {
-          const flags = parseStatusFlags(d.statusFlags);
-          return flags.parachuteDeployed;
-        } catch {
-          return false;
-        }
-      })
-    : null;
+  const apogee = data.reduce((max, current) => 
+    current.altitude > max.altitude ? current : max, 
+    data[0] || { altitude: 0, time: 0 }
+  );
 
   const resetZoom = () => {
     setZoomDomain(null);
@@ -176,8 +150,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, textMessages }: Altit
                 activeDot={{ r: 3, stroke: 'hsl(var(--mission-warning))', strokeWidth: 2 }}
               />
             )}
-            
-            {/* Apogee horizontal line */}
             {apogee && apogee.altitude > 0 && (
               <ReferenceLine 
                 yAxisId="altitude"
@@ -188,36 +160,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, textMessages }: Altit
                   value: `APOGEE: ${apogee.altitude.toFixed(1)}m`, 
                   position: "top",
                   fontSize: 10
-                }}
-              />
-            )}
-            
-            {/* Apogee detection time vertical line (from message) */}
-            {apogeeDetection && (
-              <ReferenceLine 
-                x={apogeeDetection.time / 1000}
-                stroke="hsl(var(--mission-warning))" 
-                strokeDasharray="3 3"
-                label={{ 
-                  value: `APOGEE DETECTED`, 
-                  position: "insideBottom",
-                  fontSize: 9,
-                  fill: "hsl(var(--mission-warning))"
-                }}
-              />
-            )}
-            
-            {/* Parachute deployment vertical line */}
-            {parachuteDeployment && (
-              <ReferenceLine 
-                x={parachuteDeployment.time / 1000}
-                stroke="hsl(var(--mission-success))" 
-                strokeDasharray="3 3"
-                label={{ 
-                  value: `CHUTE DEPLOY`, 
-                  position: "insideBottom",
-                  fontSize: 9,
-                  fill: "hsl(var(--mission-success))"
                 }}
               />
             )}
