@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TelemetryData } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
+import { Activity, TrendingUp, RotateCcw, Eye, EyeOff, Ruler } from "lucide-react";
 
 interface AltitudeChartProps {
   data: TelemetryData[];
@@ -15,6 +16,7 @@ interface AltitudeChartProps {
 export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
+  const [yAxisScale, setYAxisScale] = useState<number>(1);
 
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
@@ -51,6 +53,16 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     if (name === 'altitude') return [`${value.toFixed(1)}m`, 'Altitude'];
     if (name === 'accelY') return [`${value.toFixed(2)}g`, 'Y-Acceleration'];
     return [`${value.toFixed(1)}m`, 'Max Altitude'];
+  };
+
+  // Format Y-axis ticks based on scale
+  const formatYAxisTick = (value: number) => {
+    if (yAxisScale >= 100) {
+      return `${Math.round(value / yAxisScale) * yAxisScale}m`;
+    } else if (yAxisScale >= 10) {
+      return `${Math.round(value / yAxisScale) * yAxisScale}m`;
+    }
+    return `${value}m`;
   };
 
   return (
@@ -104,6 +116,25 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
           <RotateCcw className="h-3 w-3 mr-1" />
           Reset View
         </Button>
+
+        <div className="flex items-center gap-2">
+          <Ruler className="h-3 w-3 text-muted-foreground" />
+          <Select value={yAxisScale.toString()} onValueChange={(value) => setYAxisScale(Number(value))}>
+            <SelectTrigger className="h-8 w-20 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1m</SelectItem>
+              <SelectItem value="5">5m</SelectItem>
+              <SelectItem value="10">10m</SelectItem>
+              <SelectItem value="25">25m</SelectItem>
+              <SelectItem value="50">50m</SelectItem>
+              <SelectItem value="100">100m</SelectItem>
+              <SelectItem value="250">250m</SelectItem>
+              <SelectItem value="500">500m</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Chart */}
@@ -132,7 +163,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               yAxisId="altitude"
               stroke="hsl(var(--primary))"
               fontSize={10}
-              tickFormatter={(value) => `${value}m`}
+              tickFormatter={formatYAxisTick}
+              interval={yAxisScale > 1 ? Math.ceil(yAxisScale / 5) : 'preserveStartEnd'}
             />
             
             {showAcceleration && (
