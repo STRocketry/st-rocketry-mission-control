@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TelemetryData } from "@/types/telemetry";
+import { parseStatusFlags } from "@/types/telemetry";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff } from "lucide-react";
 
@@ -27,6 +28,12 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     current.altitude > max.altitude ? current : max, 
     data[0] || { altitude: 0, time: 0 }
   );
+
+  // Find parachute deployment time
+  const parachuteDeployment = data.find(d => {
+    const flags = parseStatusFlags(d.statusFlags);
+    return flags.parachuteDeployed;
+  });
 
   const resetZoom = () => {
     setZoomDomain(null);
@@ -160,6 +167,32 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                   value: `APOGEE: ${apogee.altitude.toFixed(1)}m`, 
                   position: "top",
                   fontSize: 10
+                }}
+              />
+            )}
+            {apogee && apogee.altitude > 0 && (
+              <ReferenceLine 
+                x={apogee.time / 1000}
+                stroke="hsl(var(--mission-critical))" 
+                strokeDasharray="2 2"
+                label={{ 
+                  value: `MAX ALT`, 
+                  position: "bottom",
+                  fontSize: 9,
+                  offset: 5
+                }}
+              />
+            )}
+            {parachuteDeployment && (
+              <ReferenceLine 
+                x={parachuteDeployment.time / 1000}
+                stroke="hsl(var(--mission-success))" 
+                strokeDasharray="3 3"
+                label={{ 
+                  value: `CHUTE DEPLOY`, 
+                  position: "bottom",
+                  fontSize: 9,
+                  offset: 5
                 }}
               />
             )}
