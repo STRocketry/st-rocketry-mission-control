@@ -24,27 +24,27 @@ export interface FlightSession {
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface StatusFlags {
-  eepromEnabled: boolean;       // 0b000000001 (1) - EEPROM enabled
-  bmp180OK: boolean;           // 0b000000010 (2) - BMP180 sensor OK
-  mpu6050OK: boolean;          // 0b000000100 (4) - MPU6050 sensor OK
-  servoOpen: boolean;          // 0b000001000 (8) - Servo position
-  calibDone: boolean;          // 0b000010000 (16) - Calibration complete
-  systemReady: boolean;        // 0b000100000 (32) - System ready
-  launchDetected: boolean;     // 0b001000000 (64) - Launch detected
-  hatchOpen: boolean;          // 0b010000000 (128) - Hatch status
-  parachuteDeployed: boolean;  // 0b100000000 (256) - Parachute deployed
+  servoOpen: boolean;          // 0b0001 (1) - Servo position (bit 0)
+  launchDetected: boolean;     // 0b0010 (2) - Launch detected (bit 1)
+  hatchOpen: boolean;          // 0b0100 (4) - Hatch status (bit 2)
+  parachuteDeployed: boolean;  // 0b1000 (8) - Parachute deployed (bit 3)
+  eepromEnabled: boolean;      // 0b00010000 (16) - EEPROM enabled (bit 4)
+  bmp180OK: boolean;           // 0b00100000 (32) - BMP180 sensor OK (bit 5)
+  mpu6050OK: boolean;          // 0b01000000 (64) - MPU6050 sensor OK (bit 6)
+  calibDone: boolean;          // 0b10000000 (128) - Calibration complete (bit 7)
+  systemReady: boolean;        // Higher bits - System ready
 }
 
 export const parseStatusFlags = (flags: number): StatusFlags => ({
-  eepromEnabled: !!(flags & 1),      // 0b000000001 (1) - EEPROM enabled
-  bmp180OK: !!(flags & 2),           // 0b000000010 (2) - BMP180 sensor OK
-  mpu6050OK: !!(flags & 4),          // 0b000000100 (4) - MPU6050 sensor OK
-  servoOpen: !!(flags & 8),          // 0b000001000 (8) - Servo position (0=closed, 1=open)
-  calibDone: !!(flags & 16),         // 0b000010000 (16) - Calibration complete
-  systemReady: !!(flags & 32),       // 0b000100000 (32) - System ready
-  launchDetected: !!(flags & 64),    // 0b001000000 (64) - Launch detected (1=launched)
-  hatchOpen: !!(flags & 128),        // 0b010000000 (128) - Hatch status (0=closed, 1=open)
-  parachuteDeployed: !!(flags & 256) // 0b100000000 (256) - Parachute deployed (1=deployed)
+  servoOpen: !!(flags & 1),          // 0b0001 (1) - Servo position (bit 0)
+  launchDetected: !!(flags & 2),     // 0b0010 (2) - Launch detected (bit 1)
+  hatchOpen: !!(flags & 4),          // 0b0100 (4) - Hatch status (bit 2)
+  parachuteDeployed: !!(flags & 8),  // 0b1000 (8) - Parachute deployed (bit 3)
+  eepromEnabled: !!(flags & 16),     // 0b00010000 (16) - EEPROM enabled (bit 4)
+  bmp180OK: !!(flags & 32),          // 0b00100000 (32) - BMP180 sensor OK (bit 5)
+  mpu6050OK: !!(flags & 64),         // 0b01000000 (64) - MPU6050 sensor OK (bit 6)
+  calibDone: !!(flags & 128),        // 0b10000000 (128) - Calibration complete (bit 7)
+  systemReady: !!(flags & 256)       // Higher bits - System ready
 });
 
 export const parseTelemetryPacket = (csvLine: string): TelemetryData | null => {
