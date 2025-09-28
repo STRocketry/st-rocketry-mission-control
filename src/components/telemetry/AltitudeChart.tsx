@@ -19,6 +19,16 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
   const [yAxisScale, setYAxisScale] = useState<number>(5); // Дефолтный масштаб 5м
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false); // Флаг автомасштабирования
 
+  // Debug: log data structure
+  useEffect(() => {
+    if (data.length > 0) {
+      console.log('=== TELEMETRY DATA STRUCTURE ===');
+      console.log('Last data point:', data[data.length - 1]);
+      console.log('Data length:', data.length);
+      console.log('==============================');
+    }
+  }, [data]);
+
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
     data.map(d => ({
@@ -39,34 +49,72 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
-  // Find first parachute deployment time - FIXED VERSION
+  // Find first parachute deployment time - DEBUG VERSION
   const parachuteDeploymentTime = useMemo(() => {
-    if (data.length === 0) return null;
+    if (data.length === 0) {
+      console.log('Parachute: No data');
+      return null;
+    }
+    
+    console.log('=== PARACHUTE DEBUG START ===');
+    console.log('Data length:', data.length);
     
     try {
-      // Безопасная проверка бита 3 (0b00001000)
-      const deploymentPoint = data.find(d => {
+      let deploymentPointFound = null;
+
+      for (let i = 0; i < data.length; i++) {
+        const d = data[i];
+        console.log(`Checking point ${i}:`, {
+          time: d.time,
+          statusFlags: d.statusFlags,
+          altitude: d.altitude,
+          statusFlagsType: typeof d.statusFlags
+        });
+        
         try {
-          // Проверяем, что statusFlags существует и является числом
-          if (d.statusFlags === undefined || d.statusFlags === null) return false;
+          // Проверяем, что statusFlags существует
+          if (d.statusFlags === undefined || d.statusFlags === null) {
+            console.log(`  Point ${i}: statusFlags is undefined/null`);
+            continue;
+          }
           
-          // Преобразуем в число, если это строка
-          const flags = typeof d.statusFlags === 'string' 
-            ? parseInt(d.statusFlags, 10) 
-            : Number(d.statusFlags);
+          // Преобразуем в число
+          let flags;
+          if (typeof d.statusFlags === 'string') {
+            flags = parseInt(d.statusFlags, 10);
+            console.log(`  Point ${i}: parsed string to number:`, flags);
+          } else {
+            flags = Number(d.statusFlags);
+            console.log(`  Point ${i}: converted to number:`, flags);
+          }
           
           // Проверяем, что это валидное число
-          if (isNaN(flags)) return false;
+          if (isNaN(flags)) {
+            console.log(`  Point ${i}: flags is NaN`);
+            continue;
+          }
           
-          // Проверяем бит 3 (парашют)
-          return !!(flags & 8);
+          const bitCheck = flags & 8;
+          const hasParachute = !!(bitCheck);
+          console.log(`  Point ${i}: flags=${flags}, flags&8=${bitCheck}, hasParachute=${hasParachute}`);
+          
+          if (hasParachute) {
+            deploymentPointFound = d;
+            console.log(`  >>> PARACHUTE FOUND at index ${i} <<<`);
+            break;
+          }
         } catch (error) {
-          console.error('Error checking parachute status flags:', error);
-          return false;
+          console.error(`Error checking point ${i}:`, error);
+          continue;
         }
-      });
+      }
       
-      return deploymentPoint ? deploymentPoint.time / 1000 : null;
+      const result = deploymentPointFound ? deploymentPointFound.time / 1000 : null;
+      console.log('Final deployment point:', deploymentPointFound);
+      console.log('Result time (seconds):', result);
+      console.log('=== PARACHUTE DEBUG END ===');
+      
+      return result;
     } catch (error) {
       console.error('Error calculating parachute deployment time:', error);
       return null;
@@ -158,6 +206,9 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       return ticks;
     }
   };
+
+  // Debug render of parachute line
+  console.log('RENDER - parachuteDeploymentTime:', parachuteDeploymentTime);
 
   return (
     <Card className="p-4 lg:p-6 bg-card/50 backdrop-blur-sm border-primary/20">
@@ -329,8 +380,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               />
             )}
 
-            {/* Parachute Deployment Reference Line - FIXED */}
-            {parachuteDeploymentTime && parachuteDeploymentTime > 0 && (
+            {/* Parachute Deployment Reference Line - SAFE RENDER */}
+            {parachuteDeploymentTime !== null && parachuteDeploymentTime !== undefined && parachuteDeploymentTime > 0 && (
               <ReferenceLine 
                 x={parachuteDeploymentTime} 
                 stroke="hsl(var(--mission-success))" 
@@ -343,6 +394,21 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 }}
               />
             )}
+
+            {/* TEMPORARY: Uncomment to test without parachute line */}
+            {/* {false && parachuteDeploymentTime && (
+              <ReferenceLine 
+                x={parachuteDeploymentTime} 
+                stroke="hsl(var(--mission-success))" 
+                strokeDasharray="3 3"
+                strokeWidth={2}
+                label={{ 
+                  value: `CHUTE: ${parachuteDeploymentTime.toFixed(1)}s`, 
+                  position: "insideTopRight",
+                  fontSize: 10
+                }}
+              />
+            )} */}
           </LineChart>
         </ResponsiveContainer>
       </div>
