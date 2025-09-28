@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TelemetryData } from "@/types/telemetry";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Activity, TrendingUp, RotateCcw, Eye, EyeOff, Ruler } from "lucide-react";
 
 interface AltitudeChartProps {
@@ -39,85 +39,95 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
-  // Find parachute deployment - WAIT FOR SECOND PACKET
+  // Find parachute deployment - SIMPLE VERSION
   const parachuteDeploymentTime = useMemo(() => {
     if (data.length === 0) return null;
     
     try {
-      let firstParachutePacket = null;
-      let parachutePacketCount = 0;
+      let parachutePackets = 0;
+      let firstTime = null;
       
-      for (let i = 0; i < data.length; i++) {
-        const d = data[i];
+      for (const d of data) {
+        if (d.statusFlags == null) continue;
         
-        try {
-          if (d.statusFlags === undefined || d.statusFlags === null) continue;
-          
-          const flags = typeof d.statusFlags === 'string' 
-            ? parseInt(d.statusFlags, 10) 
-            : Number(d.statusFlags);
-          
-          if (isNaN(flags)) continue;
-          
-          // Check parachute bit
-          if (flags & 8) {
-            parachutePacketCount++;
-            
-            // Save first packet time
-            if (firstParachutePacket === null) {
-              firstParachutePacket = d.time / 1000;
-              console.log('🎯 First parachute packet detected at:', firstParachutePacket, 'seconds');
-            }
-            
-            // Wait for at least 2 packets with parachute flag
-            if (parachutePacketCount >= 2) {
-              console.log('✅ Second parachute packet confirmed, rendering line at:', firstParachutePacket, 'seconds');
-              return firstParachutePacket;
-            }
+        const flags = Number(d.statusFlags);
+        if (isNaN(flags)) continue;
+        
+        if (flags & 8) {
+          parachutePackets++;
+          if (firstTime === null) {
+            firstTime = d.time / 1000;
           }
-        } catch (error) {
-          continue;
+          
+          // Need at least 2 consecutive packets to confirm
+          if (parachutePackets >= 2) {
+            return firstTime;
+          }
+        } else {
+          // Reset if we get packet without parachute flag
+          parachutePackets = 0;
+          firstTime = null;
         }
-      }
-      
-      // If we have only one packet, don't render yet
-      if (parachutePacketCount === 1) {
-        console.log('⏳ Waiting for second parachute packet...');
-        return null;
       }
       
       return null;
     } catch (error) {
-      console.error('Error calculating parachute deployment time:', error);
       return null;
     }
   }, [data]);
 
-  // Safe render check for parachute line
-  const shouldRenderParachuteLine = useMemo(() => {
-    if (!parachuteDeploymentTime) return false;
+  // Custom parachute line component - SAFE FALLBACK
+  const CustomParachuteLine = () => {
+    if (!parachuteDeploymentTime || !chartData.length) return null;
     
-    // Validate time
-    if (parachuteDeploymentTime <= 0 || !isFinite(parachuteDeploymentTime)) return false;
-    
-    // Check if we have chart data
-    if (!chartData || chartData.length === 0) return false;
-    
-    // Check if parachute time is within current data range
-    const chartTimes = chartData.map(d => d.time);
-    const minTime = Math.min(...chartTimes);
-    const maxTime = Math.max(...chartTimes);
-    
-    const isValid = parachuteDeploymentTime >= minTime && parachuteDeploymentTime <= maxTime;
-    
-    if (isValid) {
-      console.log('📈 Parachute line will render at:', parachuteDeploymentTime, 'seconds');
-    } else {
-      console.log('⏸️ Parachute time not in current data range:', parachuteDeploymentTime, 'min:', minTime, 'max:', maxTime);
+    try {
+      // Find the index in chartData for parachute time
+      const parachuteIndex = chartData.findIndex(d => Math.abs(d.time - parachuteDeploymentTime) < 0.1);
+      if (parachuteIndex === -1) return null;
+      
+      const parachuteData = chartData[parachuteIndex];
+      const [yMin, yMax] = getYAxisDomain();
+      
+      return (
+        <g>
+          {/* Vertical line */}
+          <line
+            x1={parachuteData.time}
+            x2={parachuteData.time}
+            y1={yMin}
+            y2={yMax}
+            stroke="hsl(var(--mission-success))"
+            strokeDasharray="3 3"
+            strokeWidth={2}
+          />
+          {/* Label background */}
+          <rect
+            x={parachuteData.time + 5}
+            y={yMax - 20}
+            width={80}
+            height={16}
+            fill="hsl(var(--card))"
+            stroke="hsl(var(--border))"
+            strokeWidth={1}
+            rx={3}
+          />
+          {/* Label text */}
+          <text
+            x={parachuteData.time + 10}
+            y={yMax - 10}
+            fill="hsl(var(--mission-success))"
+            fontSize={10}
+            fontWeight="bold"
+          >
+            CHUTE: {parachuteDeploymentTime.toFixed(1)}s
+          </text>
+        </g>
+      );
+    } catch (error) {
+      console.error('Error rendering custom parachute line:', error);
+      return null;
     }
-    
-    return isValid;
-  }, [parachuteDeploymentTime, chartData]);
+  };
 
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
@@ -234,6 +244,11 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               AUTO SCALE
             </Badge>
           )}
+          {parachuteDeploymentTime && (
+            <Badge className="bg-mission-success text-background text-xs">
+              PARACHUTE: {parachuteDeploymentTime.toFixed(1)}s
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -283,7 +298,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       </div>
 
       {/* Chart */}
-      <div className="h-[300px] lg:h-[400px] w-full">
+      <div className="h-[300px] lg:h-[400px] w-full relative">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={chartData} 
@@ -362,33 +377,19 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
             
             {/* Apogee Reference Line */}
             {apogee && apogee.altitude > 0 && (
-              <ReferenceLine 
-                yAxisId="altitude"
-                y={apogee.altitude} 
-                stroke="hsl(var(--mission-critical))" 
+              <line
+                x1={chartData[0]?.time || 0}
+                x2={chartData[chartData.length - 1]?.time || 0}
+                y1={apogee.altitude}
+                y2={apogee.altitude}
+                stroke="hsl(var(--mission-critical))"
                 strokeDasharray="5 5"
-                label={{ 
-                  value: `APOGEE: ${apogee.altitude.toFixed(1)}m`, 
-                  position: "top",
-                  fontSize: 10
-                }}
+                strokeWidth={1}
               />
             )}
 
-            {/* Parachute Deployment Reference Line - WAIT FOR 2nd PACKET */}
-            {shouldRenderParachuteLine && (
-              <ReferenceLine 
-                x={parachuteDeploymentTime} 
-                stroke="hsl(var(--mission-success))" 
-                strokeDasharray="3 3"
-                strokeWidth={2}
-                label={{ 
-                  value: `CHUTE: ${parachuteDeploymentTime.toFixed(1)}s`, 
-                  position: "insideTopRight",
-                  fontSize: 10
-                }}
-              />
-            )}
+            {/* Custom Parachute Line - SAFE SVG */}
+            <CustomParachuteLine />
           </LineChart>
         </ResponsiveContainer>
       </div>
