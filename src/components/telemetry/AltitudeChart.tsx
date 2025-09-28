@@ -39,6 +39,14 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
+  // Find first parachute deployment time
+  const parachuteDeploymentTime = useMemo(() => {
+    if (data.length === 0) return null;
+    
+    const deploymentPoint = data.find(d => !!(d.statusFlags & 8)); // Check bit 3 (0b00001000)
+    return deploymentPoint ? deploymentPoint.time / 1000 : null;
+  }, [data]);
+
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
     if (data.length === 0 || isAutoScaled) return;
@@ -290,6 +298,21 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 label={{ 
                   value: `APOGEE: ${apogee.altitude.toFixed(1)}m`, 
                   position: "top",
+                  fontSize: 10
+                }}
+              />
+            )}
+
+            {/* Parachute Deployment Reference Line */}
+            {parachuteDeploymentTime && (
+              <ReferenceLine 
+                x={parachuteDeploymentTime} 
+                stroke="hsl(var(--mission-success))" 
+                strokeDasharray="3 3"
+                strokeWidth={2}
+                label={{ 
+                  value: `CHUTE: ${parachuteDeploymentTime.toFixed(1)}s`, 
+                  position: "insideTopRight",
                   fontSize: 10
                 }}
               />
