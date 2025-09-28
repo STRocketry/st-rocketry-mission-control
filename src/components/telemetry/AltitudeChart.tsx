@@ -19,16 +19,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
   const [yAxisScale, setYAxisScale] = useState<number>(5); // Дефолтный масштаб 5м
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false); // Флаг автомасштабирования
 
-  // Debug: log data structure
-  useEffect(() => {
-    if (data.length > 0) {
-      console.log('=== TELEMETRY DATA STRUCTURE ===');
-      console.log('Last data point:', data[data.length - 1]);
-      console.log('Data length:', data.length);
-      console.log('==============================');
-    }
-  }, [data]);
-
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
     data.map(d => ({
@@ -49,77 +39,85 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
-  // Find first parachute deployment time - DEBUG VERSION
+  // Find parachute deployment - WAIT FOR SECOND PACKET
   const parachuteDeploymentTime = useMemo(() => {
-    if (data.length === 0) {
-      console.log('Parachute: No data');
-      return null;
-    }
-    
-    console.log('=== PARACHUTE DEBUG START ===');
-    console.log('Data length:', data.length);
+    if (data.length === 0) return null;
     
     try {
-      let deploymentPointFound = null;
-
+      let firstParachutePacket = null;
+      let parachutePacketCount = 0;
+      
       for (let i = 0; i < data.length; i++) {
         const d = data[i];
-        console.log(`Checking point ${i}:`, {
-          time: d.time,
-          statusFlags: d.statusFlags,
-          altitude: d.altitude,
-          statusFlagsType: typeof d.statusFlags
-        });
         
         try {
-          // Проверяем, что statusFlags существует
-          if (d.statusFlags === undefined || d.statusFlags === null) {
-            console.log(`  Point ${i}: statusFlags is undefined/null`);
-            continue;
-          }
+          if (d.statusFlags === undefined || d.statusFlags === null) continue;
           
-          // Преобразуем в число
-          let flags;
-          if (typeof d.statusFlags === 'string') {
-            flags = parseInt(d.statusFlags, 10);
-            console.log(`  Point ${i}: parsed string to number:`, flags);
-          } else {
-            flags = Number(d.statusFlags);
-            console.log(`  Point ${i}: converted to number:`, flags);
-          }
+          const flags = typeof d.statusFlags === 'string' 
+            ? parseInt(d.statusFlags, 10) 
+            : Number(d.statusFlags);
           
-          // Проверяем, что это валидное число
-          if (isNaN(flags)) {
-            console.log(`  Point ${i}: flags is NaN`);
-            continue;
-          }
+          if (isNaN(flags)) continue;
           
-          const bitCheck = flags & 8;
-          const hasParachute = !!(bitCheck);
-          console.log(`  Point ${i}: flags=${flags}, flags&8=${bitCheck}, hasParachute=${hasParachute}`);
-          
-          if (hasParachute) {
-            deploymentPointFound = d;
-            console.log(`  >>> PARACHUTE FOUND at index ${i} <<<`);
-            break;
+          // Check parachute bit
+          if (flags & 8) {
+            parachutePacketCount++;
+            
+            // Save first packet time
+            if (firstParachutePacket === null) {
+              firstParachutePacket = d.time / 1000;
+              console.log('🎯 First parachute packet detected at:', firstParachutePacket, 'seconds');
+            }
+            
+            // Wait for at least 2 packets with parachute flag
+            if (parachutePacketCount >= 2) {
+              console.log('✅ Second parachute packet confirmed, rendering line at:', firstParachutePacket, 'seconds');
+              return firstParachutePacket;
+            }
           }
         } catch (error) {
-          console.error(`Error checking point ${i}:`, error);
           continue;
         }
       }
       
-      const result = deploymentPointFound ? deploymentPointFound.time / 1000 : null;
-      console.log('Final deployment point:', deploymentPointFound);
-      console.log('Result time (seconds):', result);
-      console.log('=== PARACHUTE DEBUG END ===');
+      // If we have only one packet, don't render yet
+      if (parachutePacketCount === 1) {
+        console.log('⏳ Waiting for second parachute packet...');
+        return null;
+      }
       
-      return result;
+      return null;
     } catch (error) {
       console.error('Error calculating parachute deployment time:', error);
       return null;
     }
   }, [data]);
+
+  // Safe render check for parachute line
+  const shouldRenderParachuteLine = useMemo(() => {
+    if (!parachuteDeploymentTime) return false;
+    
+    // Validate time
+    if (parachuteDeploymentTime <= 0 || !isFinite(parachuteDeploymentTime)) return false;
+    
+    // Check if we have chart data
+    if (!chartData || chartData.length === 0) return false;
+    
+    // Check if parachute time is within current data range
+    const chartTimes = chartData.map(d => d.time);
+    const minTime = Math.min(...chartTimes);
+    const maxTime = Math.max(...chartTimes);
+    
+    const isValid = parachuteDeploymentTime >= minTime && parachuteDeploymentTime <= maxTime;
+    
+    if (isValid) {
+      console.log('📈 Parachute line will render at:', parachuteDeploymentTime, 'seconds');
+    } else {
+      console.log('⏸️ Parachute time not in current data range:', parachuteDeploymentTime, 'min:', minTime, 'max:', maxTime);
+    }
+    
+    return isValid;
+  }, [parachuteDeploymentTime, chartData]);
 
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
@@ -206,9 +204,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       return ticks;
     }
   };
-
-  // Debug render of parachute line
-  console.log('RENDER - parachuteDeploymentTime:', parachuteDeploymentTime);
 
   return (
     <Card className="p-4 lg:p-6 bg-card/50 backdrop-blur-sm border-primary/20">
@@ -380,8 +375,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               />
             )}
 
-            {/* Parachute Deployment Reference Line - SAFE RENDER */}
-            {parachuteDeploymentTime !== null && parachuteDeploymentTime !== undefined && parachuteDeploymentTime > 0 && (
+            {/* Parachute Deployment Reference Line - WAIT FOR 2nd PACKET */}
+            {shouldRenderParachuteLine && (
               <ReferenceLine 
                 x={parachuteDeploymentTime} 
                 stroke="hsl(var(--mission-success))" 
@@ -394,21 +389,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 }}
               />
             )}
-
-            {/* TEMPORARY: Uncomment to test without parachute line */}
-            {/* {false && parachuteDeploymentTime && (
-              <ReferenceLine 
-                x={parachuteDeploymentTime} 
-                stroke="hsl(var(--mission-success))" 
-                strokeDasharray="3 3"
-                strokeWidth={2}
-                label={{ 
-                  value: `CHUTE: ${parachuteDeploymentTime.toFixed(1)}s`, 
-                  position: "insideTopRight",
-                  fontSize: 10
-                }}
-              />
-            )} */}
           </LineChart>
         </ResponsiveContainer>
       </div>
