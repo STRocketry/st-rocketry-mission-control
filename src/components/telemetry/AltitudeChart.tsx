@@ -39,12 +39,38 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     );
   }, [data]);
 
-  // Find first parachute deployment time
+  // Find first parachute deployment time - FIXED VERSION
   const parachuteDeploymentTime = useMemo(() => {
     if (data.length === 0) return null;
     
-    const deploymentPoint = data.find(d => !!(d.statusFlags & 8)); // Check bit 3 (0b00001000)
-    return deploymentPoint ? deploymentPoint.time / 1000 : null;
+    try {
+      // Безопасная проверка бита 3 (0b00001000)
+      const deploymentPoint = data.find(d => {
+        try {
+          // Проверяем, что statusFlags существует и является числом
+          if (d.statusFlags === undefined || d.statusFlags === null) return false;
+          
+          // Преобразуем в число, если это строка
+          const flags = typeof d.statusFlags === 'string' 
+            ? parseInt(d.statusFlags, 10) 
+            : Number(d.statusFlags);
+          
+          // Проверяем, что это валидное число
+          if (isNaN(flags)) return false;
+          
+          // Проверяем бит 3 (парашют)
+          return !!(flags & 8);
+        } catch (error) {
+          console.error('Error checking parachute status flags:', error);
+          return false;
+        }
+      });
+      
+      return deploymentPoint ? deploymentPoint.time / 1000 : null;
+    } catch (error) {
+      console.error('Error calculating parachute deployment time:', error);
+      return null;
+    }
   }, [data]);
 
   // Эффект для проверки выхода данных за пределы масштаба
@@ -303,8 +329,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               />
             )}
 
-            {/* Parachute Deployment Reference Line */}
-            {parachuteDeploymentTime && (
+            {/* Parachute Deployment Reference Line - FIXED */}
+            {parachuteDeploymentTime && parachuteDeploymentTime > 0 && (
               <ReferenceLine 
                 x={parachuteDeploymentTime} 
                 stroke="hsl(var(--mission-success))" 
