@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +16,9 @@ interface AltitudeChartProps {
 export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
-  const [yAxisScale, setYAxisScale] = useState<number>(5); // Дефолтный масштаб 5м
-  const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false); // Флаг автомасштабирования
+  const [yAxisScale, setYAxisScale] = useState<number>(5);
+  const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
@@ -76,71 +77,52 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     }
   }, [data]);
 
-  // Custom parachute line component - SAFE FALLBACK
-  const CustomParachuteLine = () => {
+  // Calculate Y-axis domain based on scale and auto-scale mode
+  const getYAxisDomain = () => {
+    if (data.length === 0) return [0, 100];
+    
+    if (isAutoScaled) {
+      const maxAlt = Math.max(...data.map(d => d.altitude));
+      const roundedMax = Math.ceil(maxAlt / 50) * 50;
+      return [0, Math.max(roundedMax, 100)];
+    } else {
+      return [0, yAxisScale];
+    }
+  };
+
+  // Calculate position for parachute line
+  const parachuteLinePosition = useMemo(() => {
     if (!parachuteDeploymentTime || !chartData.length) return null;
     
     try {
-      // Find the index in chartData for parachute time
-      const parachuteIndex = chartData.findIndex(d => Math.abs(d.time - parachuteDeploymentTime) < 0.1);
-      if (parachuteIndex === -1) return null;
+      // Find the closest data point to parachute time
+      const timeValues = chartData.map(d => d.time);
+      const minTime = Math.min(...timeValues);
+      const maxTime = Math.max(...timeValues);
       
-      const parachuteData = chartData[parachuteIndex];
-      const [yMin, yMax] = getYAxisDomain();
+      // Calculate relative position (0 to 1)
+      const position = (parachuteDeploymentTime - minTime) / (maxTime - minTime);
       
-      return (
-        <g>
-          {/* Vertical line */}
-          <line
-            x1={parachuteData.time}
-            x2={parachuteData.time}
-            y1={yMin}
-            y2={yMax}
-            stroke="hsl(var(--mission-success))"
-            strokeDasharray="3 3"
-            strokeWidth={2}
-          />
-          {/* Label background */}
-          <rect
-            x={parachuteData.time + 5}
-            y={yMax - 20}
-            width={80}
-            height={16}
-            fill="hsl(var(--card))"
-            stroke="hsl(var(--border))"
-            strokeWidth={1}
-            rx={3}
-          />
-          {/* Label text */}
-          <text
-            x={parachuteData.time + 10}
-            y={yMax - 10}
-            fill="hsl(var(--mission-success))"
-            fontSize={10}
-            fontWeight="bold"
-          >
-            CHUTE: {parachuteDeploymentTime.toFixed(1)}s
-          </text>
-        </g>
-      );
+      return {
+        position: Math.max(0, Math.min(1, position)), // Clamp between 0 and 1
+        time: parachuteDeploymentTime
+      };
     } catch (error) {
-      console.error('Error rendering custom parachute line:', error);
       return null;
     }
-  };
+  }, [parachuteDeploymentTime, chartData]);
 
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
     if (data.length === 0 || isAutoScaled) return;
 
     const currentMaxY = yAxisScale;
-    const margin = yAxisScale * 0.1; // Запас 10% от текущего масштаба
+    const margin = yAxisScale * 0.1;
     
-    // Проверяем, вышли ли данные за пределы текущего масштаба
     const dataExceedsScale = data.some(d => d.altitude > currentMaxY + margin);
     
     if (dataExceedsScale) {
-      setIsAutoScaled(true); // Включаем автомасштаб
+      setIsAutoScaled(true);
     }
   }, [data, yAxisScale, isAutoScaled]);
 
@@ -150,7 +132,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
 
   const handleResetView = () => {
     setZoomDomain(null);
-    setIsAutoScaled(false); // Возвращаем к фиксированному масштабу
+    setIsAutoScaled(false);
   };
 
   const handleMouseDown = (e: any) => {
@@ -159,42 +141,23 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
     }
   };
 
-  // Обработчик изменения масштаба
   const handleScaleChange = (value: string) => {
     const newScale = Number(value);
     setYAxisScale(newScale);
-    setIsAutoScaled(false); // При ручном изменении масштаба отключаем автомасштаб
+    setIsAutoScaled(false);
   };
 
-  // Format tooltip values
   const formatTooltip = (value: number, name: string) => {
     if (name === 'altitude') return [`${value.toFixed(1)}m`, 'Altitude'];
     if (name === 'accelY') return [`${value.toFixed(2)}g`, 'Y-Acceleration'];
     return [`${value.toFixed(1)}m`, 'Max Altitude'];
   };
 
-  // Calculate Y-axis domain based on scale and auto-scale mode
-  const getYAxisDomain = () => {
-    if (data.length === 0) return [0, 100];
-    
-    if (isAutoScaled) {
-      // Режим автомасштаба - используем данные
-      const maxAlt = Math.max(...data.map(d => d.altitude));
-      const roundedMax = Math.ceil(maxAlt / 50) * 50; // Округляем до 50м для красоты
-      return [0, Math.max(roundedMax, 100)]; // Минимум 100м
-    } else {
-      // Фиксированный масштаб
-      return [0, yAxisScale];
-    }
-  };
-
-  // Generate ticks based on scale
   const getYAxisTicks = () => {
     const [min, max] = getYAxisDomain();
     
     if (isAutoScaled) {
-      // Для автомасштаба генерируем деления динамически
-      const step = Math.ceil((max - min) / 5 / 50) * 50; // Округляем до 50м
+      const step = Math.ceil((max - min) / 5 / 50) * 50;
       const ticks = [];
       
       for (let i = min; i <= max; i += step) {
@@ -203,9 +166,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       
       return ticks;
     } else {
-      // Для фиксированного масштаба - равномерные деления
       const ticks = [];
-      const step = yAxisScale / 5; // 5 делений на шкале
+      const step = yAxisScale / 5;
       
       for (let i = min; i <= max; i += step) {
         ticks.push(i);
@@ -297,8 +259,9 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="h-[300px] lg:h-[400px] w-full relative">
+      {/* Chart Container with Overlay */}
+      <div className="h-[300px] lg:h-[400px] w-full relative" ref={chartContainerRef}>
+        {/* Main Chart */}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={chartData} 
@@ -335,7 +298,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 stroke="hsl(var(--mission-warning))"
                 fontSize={10}
                 tickFormatter={(value) => `${value}g`}
-                domain={[-20, 20]} // Fixed range for acceleration
+                domain={[-20, 20]}
               />
             )}
             
@@ -374,24 +337,37 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 activeDot={{ r: 3, stroke: 'hsl(var(--mission-warning))', strokeWidth: 2 }}
               />
             )}
-            
-            {/* Apogee Reference Line */}
-            {apogee && apogee.altitude > 0 && (
-              <line
-                x1={chartData[0]?.time || 0}
-                x2={chartData[chartData.length - 1]?.time || 0}
-                y1={apogee.altitude}
-                y2={apogee.altitude}
-                stroke="hsl(var(--mission-critical))"
-                strokeDasharray="5 5"
-                strokeWidth={1}
-              />
-            )}
-
-            {/* Custom Parachute Line - SAFE SVG */}
-            <CustomParachuteLine />
           </LineChart>
         </ResponsiveContainer>
+
+        {/* Parachute Line Overlay */}
+        {parachuteLinePosition && (
+          <div className="absolute inset-0 pointer-events-none">
+            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+              {/* Vertical line */}
+              <line
+                x1={`${parachuteLinePosition.position * 100}%`}
+                x2={`${parachuteLinePosition.position * 100}%`}
+                y1="0%"
+                y2="100%"
+                stroke="hsl(var(--mission-success))"
+                strokeDasharray="4 2"
+                strokeWidth={2}
+              />
+              {/* Label */}
+              <text
+                x={`${Math.min(parachuteLinePosition.position * 100 + 2, 95)}%`}
+                y="10%"
+                fill="hsl(var(--mission-success))"
+                fontSize="12"
+                fontWeight="bold"
+                className="font-mono"
+              >
+                CHUTE: {parachuteLinePosition.time.toFixed(1)}s
+              </text>
+            </svg>
+          </div>
+        )}
       </div>
       
       {/* Empty State */}
