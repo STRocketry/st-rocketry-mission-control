@@ -11,6 +11,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [textMessages, setTextMessages] = useState<string[]>([]);
   const [lastStatusFlags, setLastStatusFlags] = useState<number>(0);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
+  const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   
   // Flight timer state
   const [flightState, setFlightState] = useState<'pre-flight' | 'launched' | 'landed'>('pre-flight');
@@ -66,7 +67,24 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   const data = parseTelemetryPacket(line);
                   if (data) {
                     setCurrentData(data);
-                    setTelemetryData(prev => [...prev, data]);
+                    setTelemetryData(prev => {
+                      const newData = [...prev, data];
+                      
+                      // Calculate speed based on altitude change over time
+                      if (newData.length >= 2) {
+                        const lastPoint = newData[newData.length - 2];
+                        const currentPoint = data;
+                        const timeDiff = (currentPoint.time - lastPoint.time) / 1000; // Convert ms to seconds
+                        const altitudeDiff = currentPoint.altitude - lastPoint.altitude;
+                        
+                        if (timeDiff > 0) {
+                          const speed = Math.abs(altitudeDiff / timeDiff); // m/s
+                          setCurrentSpeed(speed);
+                        }
+                      }
+                      
+                      return newData;
+                    });
                     
                     // Flight state detection logic
                     setFlightState(prevState => {
@@ -190,6 +208,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const clearData = useCallback(() => {
     setTelemetryData([]);
     setCurrentData(null);
+    setCurrentSpeed(0);
     // Reset flight timer state
     setFlightState('pre-flight');
     setLaunchTime(null);
@@ -269,6 +288,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     maxAltitude,
     flightTime,
     flightState,
+    currentSpeed,
     handleConnect,
     handleDisconnect,
     sendCommand,

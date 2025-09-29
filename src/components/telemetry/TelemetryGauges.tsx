@@ -1,18 +1,19 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TelemetryData } from "@/types/telemetry";
-import { Gauge, Thermometer, Battery, Activity, Umbrella } from "lucide-react";
+import { Gauge, Thermometer, Battery, Activity, Umbrella, Zap } from "lucide-react";
 
 interface TelemetryGaugesProps {
   data: TelemetryData | null;
   isLive: boolean;
+  currentSpeed?: number;
 }
 
-export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
+export const TelemetryGauges = ({ data, isLive, currentSpeed = 0 }: TelemetryGaugesProps) => {
   if (!data) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="p-6 bg-card/30 border-border/30">
             <div className="text-center">
               <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted/50 flex items-center justify-center">
@@ -46,7 +47,7 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
   const parachuteStatus = getParachuteStatus(data.statusFlags);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
       {/* Altitude */}
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 relative overflow-hidden">
         {isLive && (
@@ -111,6 +112,22 @@ export const TelemetryGauges = ({ data, isLive }: TelemetryGaugesProps) => {
           <Badge className={`mt-2 text-xs ${voltageStatus.color}`}>
             {voltageStatus.status}
           </Badge>
+        </div>
+      </Card>
+
+      {/* Speed */}
+      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-mission-warning/20 flex items-center justify-center">
+            <Zap className="h-6 w-6 text-mission-warning" />
+          </div>
+          <p className="text-3xl font-mono font-bold telemetry-display text-mission-warning">
+            {currentSpeed.toFixed(1)}
+          </p>
+          <p className="text-sm text-muted-foreground">SPEED (m/s)</p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            {(currentSpeed * 3.6).toFixed(1)} km/h
+          </div>
         </div>
       </Card>
 
