@@ -60,18 +60,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   setTextMessages(prev => [...prev, line.trim()]);
                   toast.info(`Flight Event: ${line.trim()}`);
                   
-                  // Voice alerts for specific events
-                  if (speakFunction) {
-                    const message = line.trim().toLowerCase();
-                    if (message.includes('apogee')) {
-                      const altMatch = message.match(/(\d+\.?\d*)/);
-                      const altitude = altMatch ? altMatch[1] : 'unknown';
-                      speakFunction(`Apogee detected at ${altitude} meters`);
-                    }
-                    if (message.includes('parachute') && message.includes('deploy')) {
-                      speakFunction('Parachute deployed');
-                    }
-                  }
+                  // Voice alerts disabled for text messages
                 } else {
                   // Try to parse as telemetry data
                   const data = parseTelemetryPacket(line);
@@ -93,9 +82,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                           data.altitude > (baselineAltitude + 5) && 
                           Math.abs(data.accelY - baselineGForce) > 2) {
                         setLaunchTime(Date.now());
-                        if (speakFunction) {
-                          speakFunction("Launch detected! Flight timer started.");
-                        }
                         toast.success("🚀 Launch detected! Flight timer started.");
                         return 'launched';
                       }
@@ -105,9 +91,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                           data.altitude <= (baselineAltitude + 3) && 
                           Math.abs(data.accelY - baselineGForce) < 0.5) {
                         setLandingTime(Date.now());
-                        if (speakFunction) {
-                          speakFunction("Landing detected! Flight complete.");
-                        }
                         toast.success("🏁 Landing detected! Flight timer stopped.");
                         return 'landed';
                       }
@@ -115,23 +98,19 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       return prevState;
                     });
                     
-                    // Voice alerts for status changes
+                    // Voice alert only for parachute deployment
                     if (speakFunction && data.statusFlags !== lastStatusFlags) {
                       const currentFlags = parseStatusFlags(data.statusFlags);
                       const lastFlags = parseStatusFlags(lastStatusFlags);
                       
                       if (currentFlags.parachuteDeployed && !lastFlags.parachuteDeployed) {
-                        speakFunction("Parachute deployed");
+                        speakFunction("parachute successfully deployed");
                       }
                       
                       setLastStatusFlags(data.statusFlags);
                     }
                     
-                    // Announce max altitude when descending significantly
-                    if (speakFunction && !maxAltitudeAnnounced && data.altitude < data.maxAltitude * 0.8 && data.maxAltitude > 10) {
-                      speakFunction(`Maximum altitude ${data.maxAltitude.toFixed(0)} meters`);
-                      setMaxAltitudeAnnounced(true);
-                    }
+                    // Max altitude voice alert disabled
                   }
                 }
               }
