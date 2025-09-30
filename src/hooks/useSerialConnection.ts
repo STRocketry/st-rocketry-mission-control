@@ -29,6 +29,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   // Используем useRef для мгновенного отслеживания состояния озвучки
   const parachuteAnnouncedRef = useRef(false);
   const maxAltitudeAnnouncedRef = useRef(false);
+  
+  // НАДЕЖНОЕ РЕШЕНИЕ: используем ref для хранения максимальной высоты
+  const maxAltitudeRef = useRef(0);
 
   const handleConnect = useCallback(async (port: any) => {
     try {
@@ -82,6 +85,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   
                   if (data) {
                     setCurrentData(data);
+                    
+                    // ОБНОВЛЕНО: Обновляем maxAltitudeRef при каждом новом пакете данных
+                    if (data.altitude > maxAltitudeRef.current) {
+                      console.log('📈 New max altitude detected:', data.altitude);
+                      maxAltitudeRef.current = data.altitude;
+                    }
                     
                     // ОБНОВЛЕНО: Сохраняем данные и сразу вычисляем максимальную высоту
                     setTelemetryData(prev => {
@@ -141,33 +150,31 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     console.log('   - speakFunction exists:', !!speakFunction);
                     console.log('   - parachuteAnnouncedRef.current:', parachuteAnnouncedRef.current);
                     console.log('   - data.statusFlags:', data.statusFlags);
-                    console.log('   - telemetryData length:', telemetryData.length);
+                    console.log('   - maxAltitudeRef.current:', maxAltitudeRef.current);
                     
                     if (speakFunction) {
                       const flags = parseStatusFlags(data.statusFlags);
                       console.log('   - Parsed flags:', flags);
                       console.log('   - parachuteDeployed:', flags.parachuteDeployed);
                       
-                      // Озвучиваем сразу при первом пакете с установленным флагом парашюта
+                      // НАДЕЖНОЕ РЕШЕНИЕ: Озвучиваем сразу при первом пакете с установленным флагом парашюта
                       if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
                         console.log('🎉 PARACHUTE DEPLOYED - Triggering voice alert!');
                         speakFunction("parachute successfully deployed");
                         
-                        // ДОБАВЛЕНО: Озвучка максимальной высоты через небольшую паузу
+                        // НАДЕЖНОЕ РЕШЕНИЕ: Озвучка максимальной высоты через небольшую паузу
                         console.log('⏰ Scheduling max altitude announcement...');
+                        console.log('   - Current max altitude from ref:', maxAltitudeRef.current);
                         console.log('   - maxAltitudeAnnouncedRef.current:', maxAltitudeAnnouncedRef.current);
                         
                         setTimeout(() => {
                           console.log('🕐 Timeout executed - checking max altitude...');
-                          console.log('   - Current telemetryData length:', telemetryData.length);
-                          
-                          // ВЫЧИСЛЯЕМ максимальную высоту из текущих данных
-                          const currentMaxAltitude = Math.max(...telemetryData.map(d => d.altitude));
-                          console.log('   - Calculated max altitude:', currentMaxAltitude);
+                          console.log('   - maxAltitudeRef.current in timeout:', maxAltitudeRef.current);
                           console.log('   - maxAltitudeAnnouncedRef.current in timeout:', maxAltitudeAnnouncedRef.current);
                           
-                          if (currentMaxAltitude > 0 && !maxAltitudeAnnouncedRef.current) {
-                            const roundedAltitude = Math.round(currentMaxAltitude * 10) / 10; // Округляем до 0.1 метра
+                          // ИСПОЛЬЗУЕМ maxAltitudeRef вместо telemetryData для надежности
+                          if (maxAltitudeRef.current > 0 && !maxAltitudeAnnouncedRef.current) {
+                            const roundedAltitude = Math.round(maxAltitudeRef.current * 10) / 10; // Округляем до 0.1 метра
                             console.log(`📢 Speaking max altitude: ${roundedAltitude}m`);
                             speakFunction(`maximum altitude is ${roundedAltitude} meters`);
                             setMaxAltitudeAnnounced(true);
@@ -175,7 +182,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                             console.log(`✅ Max altitude announced: ${roundedAltitude}m`);
                           } else {
                             console.log('❌ Max altitude not announced because:', {
-                              currentMaxAltitude,
+                              maxAltitude: maxAltitudeRef.current,
                               maxAltitudeAnnounced: maxAltitudeAnnouncedRef.current
                             });
                           }
@@ -215,14 +222,15 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
-  }, [speakFunction, baselineAltitude, baselineGForce, telemetryData]); // ДОБАВЛЕН telemetryData в зависимостиости
+  }, [speakFunction, baselineAltitude, baselineGForce]); // УБРАН telemetryData из зависимостей
 
   // ДОБАВЛЕНО: Эффект для отладки изменений telemetryData
   useEffect(() => {
     console.log('📈 telemetryData updated:', {
       length: telemetryData.length,
       maxAltitude: telemetryData.length > 0 ? Math.max(...telemetryData.map(d => d.altitude)) : 0,
-      lastAltitude: telemetryData[telemetryData.length - 1]?.altitude
+      lastAltitude: telemetryData[telemetryData.length - 1]?.altitude,
+      maxAltitudeRef: maxAltitudeRef.current
     });
   }, [telemetryData]);
 
@@ -299,6 +307,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     setParachuteAnnounced(false);
     parachuteAnnouncedRef.current = false;
     maxAltitudeAnnouncedRef.current = false;
+    // Сбрасываем maxAltitudeRef
+    maxAltitudeRef.current = 0;
     console.log('✅ All states reset');
   }, []);
 
