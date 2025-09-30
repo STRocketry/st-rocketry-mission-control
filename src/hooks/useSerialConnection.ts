@@ -28,6 +28,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
 
   // Используем useRef для мгновенного отслеживания состояния озвучки
   const parachuteAnnouncedRef = useRef(false);
+  const maxAltitudeAnnouncedRef = useRef(false);
 
   const handleConnect = useCallback(async (port: any) => {
     try {
@@ -148,6 +149,19 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
                         console.log('🎉 PARACHUTE DEPLOYED - Triggering voice alert!');
                         speakFunction("parachute successfully deployed");
+                        
+                        // ДОБАВЛЕНО: Озвучка максимальной высоты через небольшую паузу
+                        setTimeout(() => {
+                          const currentMaxAltitude = Math.max(...telemetryData.map(d => d.maxAltitude));
+                          if (currentMaxAltitude > 0 && !maxAltitudeAnnouncedRef.current) {
+                            const roundedAltitude = Math.round(currentMaxAltitude * 10) / 10; // Округляем до 0.1 метра
+                            speakFunction(`maximum altitude is ${roundedAltitude} meters`);
+                            setMaxAltitudeAnnounced(true);
+                            maxAltitudeAnnouncedRef.current = true;
+                            console.log(`📊 Max altitude announced: ${roundedAltitude}m`);
+                          }
+                        }, 1500); // Пауза 1.5 секунды между сообщениями
+                        
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;
                         console.log('✅ Voice alert triggered and state updated');
@@ -182,7 +196,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
-  }, [speakFunction, baselineAltitude, baselineGForce]);
+  }, [speakFunction, baselineAltitude, baselineGForce, telemetryData]); // ДОБАВЛЕН telemetryData в зависимостиости
 
   const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
     if (!portRef.current || !isConnected) {
@@ -256,6 +270,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     // Сбрасываем флаги озвучки
     setParachuteAnnounced(false);
     parachuteAnnouncedRef.current = false;
+    maxAltitudeAnnouncedRef.current = false;
     console.log('✅ All states reset');
   }, []);
 
