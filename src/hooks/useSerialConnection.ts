@@ -82,6 +82,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                   
                   if (data) {
                     setCurrentData(data);
+                    
+                    // ОБНОВЛЕНО: Сохраняем данные и сразу вычисляем максимальную высоту
                     setTelemetryData(prev => {
                       const newData = [...prev, data];
                       
@@ -139,6 +141,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     console.log('   - speakFunction exists:', !!speakFunction);
                     console.log('   - parachuteAnnouncedRef.current:', parachuteAnnouncedRef.current);
                     console.log('   - data.statusFlags:', data.statusFlags);
+                    console.log('   - telemetryData length:', telemetryData.length);
                     
                     if (speakFunction) {
                       const flags = parseStatusFlags(data.statusFlags);
@@ -151,16 +154,32 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                         speakFunction("parachute successfully deployed");
                         
                         // ДОБАВЛЕНО: Озвучка максимальной высоты через небольшую паузу
+                        console.log('⏰ Scheduling max altitude announcement...');
+                        console.log('   - maxAltitudeAnnouncedRef.current:', maxAltitudeAnnouncedRef.current);
+                        
                         setTimeout(() => {
-                          const currentMaxAltitude = Math.max(...telemetryData.map(d => d.maxAltitude));
+                          console.log('🕐 Timeout executed - checking max altitude...');
+                          console.log('   - Current telemetryData length:', telemetryData.length);
+                          
+                          // ВЫЧИСЛЯЕМ максимальную высоту из текущих данных
+                          const currentMaxAltitude = Math.max(...telemetryData.map(d => d.altitude));
+                          console.log('   - Calculated max altitude:', currentMaxAltitude);
+                          console.log('   - maxAltitudeAnnouncedRef.current in timeout:', maxAltitudeAnnouncedRef.current);
+                          
                           if (currentMaxAltitude > 0 && !maxAltitudeAnnouncedRef.current) {
                             const roundedAltitude = Math.round(currentMaxAltitude * 10) / 10; // Округляем до 0.1 метра
+                            console.log(`📢 Speaking max altitude: ${roundedAltitude}m`);
                             speakFunction(`maximum altitude is ${roundedAltitude} meters`);
                             setMaxAltitudeAnnounced(true);
                             maxAltitudeAnnouncedRef.current = true;
-                            console.log(`📊 Max altitude announced: ${roundedAltitude}m`);
+                            console.log(`✅ Max altitude announced: ${roundedAltitude}m`);
+                          } else {
+                            console.log('❌ Max altitude not announced because:', {
+                              currentMaxAltitude,
+                              maxAltitudeAnnounced: maxAltitudeAnnouncedRef.current
+                            });
                           }
-                        }, 1500); // Пауза 1.5 секунды между сообщениями
+                        }, 2000); // Увеличил паузу до 2 секунд для надежности
                         
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;
@@ -197,6 +216,15 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       toast.error('Failed to establish connection');
     }
   }, [speakFunction, baselineAltitude, baselineGForce, telemetryData]); // ДОБАВЛЕН telemetryData в зависимостиости
+
+  // ДОБАВЛЕНО: Эффект для отладки изменений telemetryData
+  useEffect(() => {
+    console.log('📈 telemetryData updated:', {
+      length: telemetryData.length,
+      maxAltitude: telemetryData.length > 0 ? Math.max(...telemetryData.map(d => d.altitude)) : 0,
+      lastAltitude: telemetryData[telemetryData.length - 1]?.altitude
+    });
+  }, [telemetryData]);
 
   const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
     if (!portRef.current || !isConnected) {
