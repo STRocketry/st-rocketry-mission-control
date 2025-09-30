@@ -31,7 +31,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
 
   const handleConnect = useCallback(async (port: any) => {
     try {
-      console.log('🔌 Starting connection...');
       setConnectionStatus('connecting');
       portRef.current = port;
       
@@ -41,17 +40,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       
       setIsConnected(true);
       setConnectionStatus('connected');
-      console.log('✅ Connected to serial port');
       
       // Read loop
       const readLoop = async () => {
         try {
           while (true) {
             const { value, done } = await reader.read();
-            if (done) {
-              console.log('📭 Reader done');
-              break;
-            }
+            if (done) break;
             
             // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
@@ -63,22 +58,18 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
             
             for (const line of lines) {
               if (line.trim()) {
-                console.log('📨 Raw line:', line.trim());
-                
                 // Store all raw data
                 setRawData(prev => [...prev, line.trim()]);
                 
                 // Check if it's a text message (contains letters)
                 if (/[a-zA-Z]/.test(line) && !line.includes(',')) {
-                  console.log('📝 Text message detected:', line.trim());
                   setTextMessages(prev => [...prev, line.trim()]);
                   toast.info(`Flight Event: ${line.trim()}`);
                   
+                  // Voice alerts disabled for text messages
                 } else {
                   // Try to parse as telemetry data
                   const data = parseTelemetryPacket(line);
-                  console.log('📊 Parsed telemetry data:', data);
-                  
                   if (data) {
                     setCurrentData(data);
                     setTelemetryData(prev => {
@@ -88,11 +79,11 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       if (newData.length >= 2) {
                         const lastPoint = newData[newData.length - 2];
                         const currentPoint = data;
-                        const timeDiff = (currentPoint.time - lastPoint.time) / 1000;
+                        const timeDiff = (currentPoint.time - lastPoint.time) / 1000; // Convert ms to seconds
                         const altitudeDiff = currentPoint.altitude - lastPoint.altitude;
                         
                         if (timeDiff > 0) {
-                          const speed = Math.abs(altitudeDiff / timeDiff);
+                          const speed = Math.abs(altitudeDiff / timeDiff); // m/s
                           setCurrentSpeed(speed);
                         }
                       }
@@ -104,27 +95,24 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     setFlightState(prevState => {
                       // Set baseline values for the first few readings
                       if (baselineAltitude === null || baselineGForce === null) {
-                        console.log('🎯 Setting baseline values:', { altitude: data.altitude, gForce: data.accelY });
                         setBaselineAltitude(data.altitude);
                         setBaselineGForce(data.accelY);
                         return prevState;
                       }
                       
-                      // Launch detection
+                      // Launch detection: significant altitude gain (>5m) AND significant Y acceleration (>2g above baseline)
                       if (prevState === 'pre-flight' && 
                           data.altitude > (baselineAltitude + 5) && 
                           Math.abs(data.accelY - baselineGForce) > 2) {
-                        console.log('🚀 Launch detected!');
                         setLaunchTime(Date.now());
                         toast.success("🚀 Launch detected! Flight timer started.");
                         return 'launched';
                       }
                       
-                      // Landing detection
+                      // Landing detection: back to near baseline altitude (<3m above baseline) AND stable acceleration (within 0.5g of baseline)
                       if (prevState === 'launched' && 
                           data.altitude <= (baselineAltitude + 3) && 
                           Math.abs(data.accelY - baselineGForce) < 0.5) {
-                        console.log('🏁 Landing detected!');
                         setLandingTime(Date.now());
                         toast.success("🏁 Landing detected! Flight timer stopped.");
                         return 'landed';
@@ -133,43 +121,27 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       return prevState;
                     });
                     
-                    // Voice alert only for parachute deployment - ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ
-                    console.log('🔊 Checking parachute voice alert...');
-                    console.log('   - speakFunction exists:', !!speakFunction);
-                    console.log('   - parachuteAnnouncedRef.current:', parachuteAnnouncedRef.current);
-                    console.log('   - data.statusFlags:', data.statusFlags);
-                    
+                    // Voice alert only for parachute deployment - ИСПРАВЛЕННАЯ ВЕРСИЯ
                     if (speakFunction) {
                       const flags = parseStatusFlags(data.statusFlags);
-                      console.log('   - Parsed flags:', flags);
-                      console.log('   - parachuteDeployed:', flags.parachuteDeployed);
                       
                       // Озвучиваем сразу при первом пакете с установленным флагом парашюта
                       if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
-                        console.log('🎉 PARACHUTE DEPLOYED - Triggering voice alert!');
                         speakFunction("parachute successfully deployed");
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;
-                        console.log('✅ Voice alert triggered and state updated');
-                      } else if (flags.parachuteDeployed) {
-                        console.log('⚠️ Parachute deployed but already announced');
-                      } else {
-                        console.log('❌ Parachute not deployed in this packet');
+                        console.log('🔊 Parachute deployment announced immediately');
                       }
-                    } else {
-                      console.log('🔇 speakFunction not available');
                     }
                     
                     // Max altitude voice alert disabled
-                  } else {
-                    console.log('❌ Failed to parse telemetry data');
                   }
                 }
               }
             }
           }
         } catch (error) {
-          console.error('📕 Read error:', error);
+          console.error('Read error:', error);
           setConnectionStatus('error');
           toast.error('Connection lost. Please reconnect.');
         }
@@ -178,7 +150,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       readLoop();
       
     } catch (error) {
-      console.error('📕 Connection error:', error);
+      console.error('Connection error:', error);
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
@@ -211,7 +183,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
 
   const handleDisconnect = useCallback(async () => {
     try {
-      console.log('🔌 Disconnecting...');
       if (readerRef.current) {
         await readerRef.current.cancel();
         readerRef.current = null;
@@ -226,10 +197,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('disconnected');
       bufferRef.current = '';
       
-      console.log('✅ Disconnected successfully');
       toast.success('Disconnected successfully');
     } catch (error) {
-      console.error('📕 Disconnect error:', error);
+      console.error('Disconnect error:', error);
       toast.error('Error during disconnect');
     }
   }, []);
@@ -242,7 +212,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   }, [handleDisconnect]);
 
   const clearData = useCallback(() => {
-    console.log('🗑️ Clearing all data and resetting states');
     setTelemetryData([]);
     setCurrentData(null);
     setCurrentSpeed(0);
@@ -256,11 +225,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     // Сбрасываем флаги озвучки
     setParachuteAnnounced(false);
     parachuteAnnouncedRef.current = false;
-    console.log('✅ All states reset');
   }, []);
 
   const clearRawData = useCallback(() => {
-    console.log('🗑️ Clearing raw data');
     setRawData([]);
     setTextMessages([]);
   }, []);
@@ -314,10 +281,10 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
 
   // Calculate actual flight time based on launch/landing detection
   const flightTime = (() => {
-    if (!launchTime) return 0;
-    if (landingTime) return landingTime - launchTime;
-    if (flightState === 'launched') return Date.now() - launchTime;
-    return 0;
+    if (!launchTime) return 0; // No launch detected yet
+    if (landingTime) return landingTime - launchTime; // Landed
+    if (flightState === 'launched') return Date.now() - launchTime; // Still in flight
+    return 0; // Default
   })();
 
   return {
