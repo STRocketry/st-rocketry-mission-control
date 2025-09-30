@@ -15,8 +15,23 @@ import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [speakFunction, setSpeakFunction] = useState<((text: string) => void) | null>(null);
-  
+  // СОЗДАЕМ ФУНКЦИЮ SPEAK СРАЗУ, не ждем VoiceAlerts
+  const [speakFunction, setSpeakFunction] = useState<((text: string) => void) | null>(() => {
+    if ('speechSynthesis' in window) {
+      return (text: string) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.volume = 0.8;
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+        console.log('🔊 Speaking (immediate):', text);
+      };
+    }
+    return null;
+  });
+
   const {
     isConnected,
     connectionStatus,
@@ -35,7 +50,13 @@ const Index = () => {
     clearData,
     clearRawData,
     exportData
-  } = useSerialConnection(speakFunction || undefined); // ← ПЕРЕДАЕМ ФУНКЦИЮ КОГДА ОНА ГОТОВА
+  } = useSerialConnection(speakFunction || undefined);
+
+  // ОБНОВЛЯЕМ функцию когда VoiceAlerts готов (для настроек голоса)
+  const handleVoiceAlertsReady = useRef((speakFn: (text: string) => void) => {
+    setSpeakFunction(() => speakFn);
+    console.log('🔊 VoiceAlerts function updated');
+  }).current;
 
   const handleClearData = () => {
     if (telemetryData.length === 0) {
@@ -131,18 +152,14 @@ const Index = () => {
 
             {/* Voice Alerts - Moved to right column under Data Export */}
             <div className="hidden lg:block">
-              <VoiceAlerts onSpeak={speakFn => {
-                setSpeakFunction(() => speakFn); // ← СОХРАНЯЕМ ФУНКЦИЮ В STATE
-              }} />
+              <VoiceAlerts onSpeak={handleVoiceAlertsReady} />
             </div>
           </div>
         </div>
 
         {/* Voice Alerts - Mobile Only */}
         <div className="lg:hidden">
-          <VoiceAlerts onSpeak={speakFn => {
-            setSpeakFunction(() => speakFn); // ← СОХРАНЯЕМ ФУНКЦИЮ В STATE
-          }} />
+          <VoiceAlerts onSpeak={handleVoiceAlertsReady} />
         </div>
 
         {/* Footer */}
