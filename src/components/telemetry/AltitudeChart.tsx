@@ -41,12 +41,12 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
   }, [data]);
 
   // Find parachute deployment - SIMPLE VERSION
-  const parachuteDeploymentTime = useMemo(() => {
+  const parachuteDeploymentData = useMemo(() => {
     if (data.length === 0) return null;
     
     try {
-      let parachutePackets = 0;
-      let firstTime = null;
+      let firstDeploymentData = null;
+      let gotFirstPacket = false;
       
       for (const d of data) {
         if (d.statusFlags == null) continue;
@@ -55,19 +55,19 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
         if (isNaN(flags)) continue;
         
         if (flags & 8) {
-          parachutePackets++;
-          if (firstTime === null) {
-            firstTime = d.time / 1000;
+          // First packet with parachute flag - save data
+          if (firstDeploymentData === null) {
+            firstDeploymentData = {
+              time: d.time / 1000,
+              altitude: d.altitude
+            };
+            gotFirstPacket = true;
           }
           
-          // Need at least 2 consecutive packets to confirm
-          if (parachutePackets >= 2) {
-            return firstTime;
+          // If we already have first packet and this is ANY next packet - render
+          if (gotFirstPacket) {
+            return firstDeploymentData;
           }
-        } else {
-          // Reset if we get packet without parachute flag
-          parachutePackets = 0;
-          firstTime = null;
         }
       }
       
@@ -76,6 +76,30 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       return null;
     }
   }, [data]);
+
+  // Calculate position for parachute line
+  const parachuteLinePosition = useMemo(() => {
+    if (!parachuteDeploymentData || !chartData.length) return null;
+    
+    try {
+      // Calculate relative position based on actual time range
+      const timeValues = chartData.map(d => d.time);
+      const minTime = Math.min(...timeValues);
+      const maxTime = Math.max(...timeValues);
+      
+      // Calculate relative position (0 to 1)
+      const position = (parachuteDeploymentData.time - minTime) / (maxTime - minTime);
+      
+      return {
+        position: Math.max(0, Math.min(1, position)),
+        time: parachuteDeploymentData.time,
+        altitude: parachuteDeploymentData.altitude
+      };
+    } catch (error) {
+      console.error('Error calculating parachute position:', error);
+      return null;
+    }
+  }, [parachuteDeploymentData, chartData]);
 
   // Calculate Y-axis domain based on scale and auto-scale mode
   const getYAxisDomain = () => {
@@ -89,28 +113,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       return [0, yAxisScale];
     }
   };
-
-  // Calculate position for parachute line
-  const parachuteLinePosition = useMemo(() => {
-    if (!parachuteDeploymentTime || !chartData.length) return null;
-    
-    try {
-      // Find the closest data point to parachute time
-      const timeValues = chartData.map(d => d.time);
-      const minTime = Math.min(...timeValues);
-      const maxTime = Math.max(...timeValues);
-      
-      // Calculate relative position (0 to 1)
-      const position = (parachuteDeploymentTime - minTime) / (maxTime - minTime);
-      
-      return {
-        position: Math.max(0, Math.min(1, position)), // Clamp between 0 and 1
-        time: parachuteDeploymentTime
-      };
-    } catch (error) {
-      return null;
-    }
-  }, [parachuteDeploymentTime, chartData]);
 
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
@@ -206,9 +208,9 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               AUTO SCALE
             </Badge>
           )}
-          {parachuteDeploymentTime && (
+          {parachuteDeploymentData && (
             <Badge className="bg-mission-success text-background text-xs">
-              PARACHUTE: {parachuteDeploymentTime.toFixed(1)}s
+              PARACHUTE: {parachuteDeploymentData.time.toFixed(1)}s
             </Badge>
           )}
         </div>
@@ -354,17 +356,50 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 strokeDasharray="4 2"
                 strokeWidth={2}
               />
-              {/* Label */}
-              <text
-                x={`${Math.min(parachuteLinePosition.position * 100 + 2, 95)}%`}
-                y="10%"
-                fill="hsl(var(--mission-success))"
-                fontSize="12"
-                fontWeight="bold"
-                className="font-mono"
-              >
-                CHUTE: {parachuteLinePosition.time.toFixed(1)}s
-              </text>
+              
+              {/* Parachute icon */}
+              <g transform={`translate(${parachuteLinePosition.position * 100}, 10)`}>
+                {/* Parachute canopy */}
+                <path
+                  d="M-8,0 Q0,-12 8,0"
+                  fill="hsl(var(--mission-success))"
+                  stroke="hsl(var(--background))"
+                  strokeWidth="1"
+                />
+                {/* Lines */}
+                <line x1="-6" y1="0" x2="-4" y2="8" stroke="hsl(var(--mission-success))" strokeWidth="1.5"/>
+                <line x1="6" y1="0" x2="4" y2="8" stroke="hsl(var(--mission-success))" strokeWidth="1.5"/>
+                <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(var(--mission-success))" strokeWidth="1.5"/>
+              </g>
+              
+              {/* Label with background */}
+              <g transform={`translate(${Math.min(parachuteLinePosition.position * 100 + 15, 85)} 25)`}>
+                {/* Background rectangle */}
+                <rect
+                  x="-5"
+                  y="-12"
+                  width="110"
+                  height="32"
+                  rx="4"
+                  fill="hsl(var(--background))"
+                  fillOpacity="0.9"
+                  stroke="hsl(var(--mission-success))"
+                  strokeWidth="1"
+                />
+                
+                {/* Text content */}
+                <text
+                  x="0"
+                  y="0"
+                  fill="hsl(var(--mission-success))"
+                  fontSize="11"
+                  fontWeight="bold"
+                  className="font-mono"
+                >
+                  <tspan x="0" dy="0">🪂 {parachuteLinePosition.altitude.toFixed(1)}m</tspan>
+                  <tspan x="0" dy="12">{parachuteLinePosition.time.toFixed(1)}s</tspan>
+                </text>
+              </g>
             </svg>
           </div>
         )}
