@@ -12,10 +12,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   
-  // Добавляем состояние для отслеживания озвучки парашюта
   const [parachuteAnnounced, setParachuteAnnounced] = useState(false);
   
-  // Flight timer state
   const [flightState, setFlightState] = useState<'pre-flight' | 'launched' | 'landed'>('pre-flight');
   const [launchTime, setLaunchTime] = useState<number | null>(null);
   const [landingTime, setLandingTime] = useState<number | null>(null);
@@ -26,12 +24,12 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const bufferRef = useRef<string>('');
 
-  // Используем useRef для мгновенного отслеживания состояния озвучки
   const parachuteAnnouncedRef = useRef(false);
   const maxAltitudeAnnouncedRef = useRef(false);
-  
-  // НАДЕЖНОЕ РЕШЕНИЕ: используем ref для хранения максимальной высоты
   const maxAltitudeRef = useRef(0);
+  
+  // ДОБАВЛЕНО: Ref для хранения timeout ID
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleConnect = useCallback(async (port: any) => {
     try {
@@ -39,7 +37,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('connecting');
       portRef.current = port;
       
-      // Start reading data
       const reader = port.readable!.getReader();
       readerRef.current = reader;
       
@@ -47,7 +44,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('connected');
       console.log('✅ Connected to serial port');
       
-      // Read loop
       const readLoop = async () => {
         try {
           while (true) {
@@ -57,46 +53,39 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
               break;
             }
             
-            // Convert Uint8Array to string and append to buffer
             const text = new TextDecoder().decode(value);
             bufferRef.current += text;
             
-            // Process complete lines
             const lines = bufferRef.current.split('\n');
-            bufferRef.current = lines.pop() || ''; // Keep incomplete line in buffer
+            bufferRef.current = lines.pop() || '';
             
             for (const line of lines) {
               if (line.trim()) {
                 console.log('📨 Raw line:', line.trim());
                 
-                // Store all raw data
                 setRawData(prev => [...prev, line.trim()]);
                 
-                // Check if it's a text message (contains letters)
                 if (/[a-zA-Z]/.test(line) && !line.includes(',')) {
                   console.log('📝 Text message detected:', line.trim());
                   setTextMessages(prev => [...prev, line.trim()]);
                   toast.info(`Flight Event: ${line.trim()}`);
                   
                 } else {
-                  // Try to parse as telemetry data
                   const data = parseTelemetryPacket(line);
                   console.log('📊 Parsed telemetry data:', data);
                   
                   if (data) {
                     setCurrentData(data);
                     
-                    // ОБНОВЛЕНО: Обновляем maxAltitudeRef при каждом новом пакете данных
+                    // Обновляем максимальную высоту
                     if (data.altitude > maxAltitudeRef.current) {
                       console.log('📈 New max altitude detected:', data.altitude);
                       maxAltitudeRef.current = data.altitude;
                     }
                     
-                    // ОБНОВЛЕНО: Сохраняем данные и сразу вычисляем максимальную высоту
                     setTelemetryData(prev => {
                       const newData = [...prev, data];
                       
-                      // Calculate speed based on altitude change over time
                       if (newData.length >= 2) {
                         const lastPoint = newData[newData.length - 2];
                         const currentPoint = data;
@@ -112,9 +101,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       return newData;
                     });
                     
-                    // Flight state detection logic
                     setFlightState(prevState => {
-                      // Set baseline values for the first few readings
                       if (baselineAltitude === null || baselineGForce === null) {
                         console.log('🎯 Setting baseline values:', { altitude: data.altitude, gForce: data.accelY });
                         setBaselineAltitude(data.altitude);
@@ -122,7 +109,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                         return prevState;
                       }
                       
-                      // Launch detection
                       if (prevState === 'pre-flight' && 
                           data.altitude > (baselineAltitude + 5) && 
                           Math.abs(data.accelY - baselineGForce) > 2) {
@@ -132,7 +118,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                         return 'launched';
                       }
                       
-                      // Landing detection
                       if (prevState === 'launched' && 
                           data.altitude <= (baselineAltitude + 3) && 
                           Math.abs(data.accelY - baselineGForce) < 0.5) {
@@ -145,7 +130,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       return prevState;
                     });
                     
-                    // Voice alert only for parachute deployment - ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ
                     console.log('🔊 Checking parachute voice alert...');
                     console.log('   - speakFunction exists:', !!speakFunction);
                     console.log('   - parachuteAnnouncedRef.current:', parachuteAnnouncedRef.current);
@@ -157,24 +141,29 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       console.log('   - Parsed flags:', flags);
                       console.log('   - parachuteDeployed:', flags.parachuteDeployed);
                       
-                      // НАДЕЖНОЕ РЕШЕНИЕ: Озвучиваем сразу при первом пакете с установленным флагом парашюта
                       if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
                         console.log('🎉 PARACHUTE DEPLOYED - Triggering voice alert!');
+                        
+                        // Озвучиваем парашют сразу
                         speakFunction("parachute successfully deployed");
                         
-                        // НАДЕЖНОЕ РЕШЕНИЕ: Озвучка максимальной высоты через небольшую паузу
                         console.log('⏰ Scheduling max altitude announcement...');
                         console.log('   - Current max altitude from ref:', maxAltitudeRef.current);
                         console.log('   - maxAltitudeAnnouncedRef.current:', maxAltitudeAnnouncedRef.current);
                         
-                        setTimeout(() => {
+                        // ДОБАВЛЕНО: Очищаем предыдущий timeout если есть
+                        if (timeoutRef.current) {
+                          clearTimeout(timeoutRef.current);
+                        }
+                        
+                        // ИСПРАВЛЕНИЕ: Создаем новый timeout
+                        timeoutRef.current = setTimeout(() => {
                           console.log('🕐 Timeout executed - checking max altitude...');
                           console.log('   - maxAltitudeRef.current in timeout:', maxAltitudeRef.current);
                           console.log('   - maxAltitudeAnnouncedRef.current in timeout:', maxAltitudeAnnouncedRef.current);
                           
-                          // ИСПОЛЬЗУЕМ maxAltitudeRef вместо telemetryData для надежности
                           if (maxAltitudeRef.current > 0 && !maxAltitudeAnnouncedRef.current) {
-                            const roundedAltitude = Math.round(maxAltitudeRef.current * 10) / 10; // Округляем до 0.1 метра
+                            const roundedAltitude = Math.round(maxAltitudeRef.current * 10) / 10;
                             console.log(`📢 Speaking max altitude: ${roundedAltitude}m`);
                             speakFunction(`maximum altitude is ${roundedAltitude} meters`);
                             setMaxAltitudeAnnounced(true);
@@ -186,7 +175,10 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                               maxAltitudeAnnounced: maxAltitudeAnnouncedRef.current
                             });
                           }
-                        }, 2000); // Увеличил паузу до 2 секунд для надежности
+                          
+                          // Очищаем ref после выполнения
+                          timeoutRef.current = null;
+                        }, 2000);
                         
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;
@@ -200,7 +192,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       console.log('🔇 speakFunction not available');
                     }
                     
-                    // Max altitude voice alert disabled
                   } else {
                     console.log('❌ Failed to parse telemetry data');
                   }
@@ -222,9 +213,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
-  }, [speakFunction, baselineAltitude, baselineGForce]); // УБРАН telemetryData из зависимостей
+  }, [speakFunction, baselineAltitude, baselineGForce]);
 
-  // ДОБАВЛЕНО: Эффект для отладки изменений telemetryData
   useEffect(() => {
     console.log('📈 telemetryData updated:', {
       length: telemetryData.length,
@@ -233,6 +223,15 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       maxAltitudeRef: maxAltitudeRef.current
     });
   }, [telemetryData]);
+
+  // ДОБАВЛЕНО: Очистка timeout при размонтировании
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
     if (!portRef.current || !isConnected) {
@@ -262,6 +261,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const handleDisconnect = useCallback(async () => {
     try {
       console.log('🔌 Disconnecting...');
+      
+      // ДОБАВЛЕНО: Очищаем timeout при отключении
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
       if (readerRef.current) {
         await readerRef.current.cancel();
         readerRef.current = null;
@@ -284,7 +290,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     }
   }, []);
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       handleDisconnect();
@@ -293,21 +298,25 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
 
   const clearData = useCallback(() => {
     console.log('🗑️ Clearing all data and resetting states');
+    
+    // ДОБАВЛЕНО: Очищаем timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     setTelemetryData([]);
     setCurrentData(null);
     setCurrentSpeed(0);
-    // Reset flight timer state
     setFlightState('pre-flight');
     setLaunchTime(null);
     setLandingTime(null);
     setBaselineAltitude(null);
     setBaselineGForce(null);
     setMaxAltitudeAnnounced(false);
-    // Сбрасываем флаги озвучки
     setParachuteAnnounced(false);
     parachuteAnnouncedRef.current = false;
     maxAltitudeAnnouncedRef.current = false;
-    // Сбрасываем maxAltitudeRef
     maxAltitudeRef.current = 0;
     console.log('✅ All states reset');
   }, []);
@@ -365,7 +374,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     ? Math.max(...telemetryData.map(d => d.maxAltitude))
     : 0;
 
-  // Calculate actual flight time based on launch/landing detection
   const flightTime = (() => {
     if (!launchTime) return 0;
     if (landingTime) return landingTime - launchTime;
