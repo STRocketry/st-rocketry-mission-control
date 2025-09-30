@@ -9,9 +9,11 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [currentData, setCurrentData] = useState<TelemetryData | null>(null);
   const [rawData, setRawData] = useState<string[]>([]);
   const [textMessages, setTextMessages] = useState<string[]>([]);
-  const [lastStatusFlags, setLastStatusFlags] = useState<number>(0);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
+  
+  // Добавляем состояние для отслеживания озвучки парашюта
+  const [parachuteAnnounced, setParachuteAnnounced] = useState(false);
   
   // Flight timer state
   const [flightState, setFlightState] = useState<'pre-flight' | 'launched' | 'landed'>('pre-flight');
@@ -23,6 +25,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const portRef = useRef<any>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const bufferRef = useRef<string>('');
+
+  // Используем useRef для мгновенного отслеживания состояния озвучки
+  const parachuteAnnouncedRef = useRef(false);
 
   const handleConnect = useCallback(async (port: any) => {
     try {
@@ -116,16 +121,17 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       return prevState;
                     });
                     
-                    // Voice alert only for parachute deployment
-                    if (speakFunction && data.statusFlags !== lastStatusFlags) {
-                      const currentFlags = parseStatusFlags(data.statusFlags);
-                      const lastFlags = parseStatusFlags(lastStatusFlags);
+                    // Voice alert only for parachute deployment - ИСПРАВЛЕННАЯ ВЕРСИЯ
+                    if (speakFunction) {
+                      const flags = parseStatusFlags(data.statusFlags);
                       
-                      if (currentFlags.parachuteDeployed && !lastFlags.parachuteDeployed) {
+                      // Озвучиваем сразу при первом пакете с установленным флагом парашюта
+                      if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
                         speakFunction("parachute successfully deployed");
+                        setParachuteAnnounced(true);
+                        parachuteAnnouncedRef.current = true;
+                        console.log('🔊 Parachute deployment announced immediately');
                       }
-                      
-                      setLastStatusFlags(data.statusFlags);
                     }
                     
                     // Max altitude voice alert disabled
@@ -148,7 +154,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       setConnectionStatus('error');
       toast.error('Failed to establish connection');
     }
-  }, [speakFunction, lastStatusFlags, maxAltitudeAnnounced]);
+  }, [speakFunction, baselineAltitude, baselineGForce]);
 
   const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
     if (!portRef.current || !isConnected) {
@@ -216,6 +222,9 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     setBaselineAltitude(null);
     setBaselineGForce(null);
     setMaxAltitudeAnnounced(false);
+    // Сбрасываем флаги озвучки
+    setParachuteAnnounced(false);
+    parachuteAnnouncedRef.current = false;
   }, []);
 
   const clearRawData = useCallback(() => {
