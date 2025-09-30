@@ -65,7 +65,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       });
 
       // Небольшая пауза между сообщениями
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
     } catch (error) {
       console.error('Error in speech synthesis:', error);
