@@ -7,9 +7,11 @@ interface TelemetryGaugesProps {
   data: TelemetryData | null;
   isLive: boolean;
   currentSpeed?: number;
+  maxSpeed?: number;
+  maxGForce?: number;
 }
 
-export const TelemetryGauges = ({ data, isLive, currentSpeed = 0 }: TelemetryGaugesProps) => {
+export const TelemetryGauges = ({ data, isLive, currentSpeed = 0, maxSpeed = 0, maxGForce = 0 }: TelemetryGaugesProps) => {
   if (!data) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
@@ -79,6 +81,9 @@ export const TelemetryGauges = ({ data, isLive, currentSpeed = 0 }: TelemetryGau
           <p className="text-sm text-muted-foreground">G-FORCE Y</p>
           <div className="mt-2 text-xs text-muted-foreground">
             <div>Vertical: {data.accelY.toFixed(2)}g</div>
+            {maxGForce > 0 && (
+              <div className="text-mission-critical mt-1">MAX: {maxGForce.toFixed(2)}g</div>
+            )}
           </div>
         </div>
       </Card>
@@ -126,7 +131,10 @@ export const TelemetryGauges = ({ data, isLive, currentSpeed = 0 }: TelemetryGau
           </p>
           <p className="text-sm text-muted-foreground">SPEED (m/s)</p>
           <div className="mt-2 text-xs text-muted-foreground">
-            {(currentSpeed * 3.6).toFixed(1)} km/h
+            <div>{(currentSpeed * 3.6).toFixed(1)} km/h</div>
+            {maxSpeed > 0 && (
+              <div className="text-mission-critical mt-1">MAX: {maxSpeed.toFixed(1)} m/s</div>
+            )}
           </div>
         </div>
       </Card>

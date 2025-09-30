@@ -26,6 +26,8 @@ const Index = () => {
     maxAltitude,
     flightTime,
     currentSpeed,
+    maxSpeed,
+    maxGForce,
     handleConnect,
     handleDisconnect,
     sendCommand,
@@ -69,7 +71,13 @@ const Index = () => {
           {/* Left Column - Charts and Gauges */}
           <div className="lg:col-span-3 space-y-4 lg:space-y-6 order-2 lg:order-1">
             {/* Telemetry Gauges */}
-            <TelemetryGauges data={currentData} isLive={isConnected && connectionStatus === 'connected'} currentSpeed={currentSpeed} />
+            <TelemetryGauges 
+              data={currentData} 
+              isLive={isConnected && connectionStatus === 'connected'} 
+              currentSpeed={currentSpeed}
+              maxSpeed={maxSpeed}
+              maxGForce={maxGForce}
+            />
 
             {/* Altitude Chart */}
             <div className="w-full">

@@ -11,6 +11,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [textMessages, setTextMessages] = useState<string[]>([]);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
+  const [maxSpeed, setMaxSpeed] = useState<number>(0);
+  const [maxGForce, setMaxGForce] = useState<number>(0);
   
   // Добавляем состояние для отслеживания озвучки парашюта
   const [parachuteAnnounced, setParachuteAnnounced] = useState(false);
@@ -83,9 +85,19 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                         const altitudeDiff = currentPoint.altitude - lastPoint.altitude;
                         
                         if (timeDiff > 0) {
-                          const speed = Math.abs(altitudeDiff / timeDiff); // m/s
-                          setCurrentSpeed(speed);
+                          const speed = altitudeDiff / timeDiff; // m/s (positive when ascending)
+                          setCurrentSpeed(Math.abs(speed));
+                          
+                          // Track max speed only when ascending (positive speed)
+                          if (speed > 0) {
+                            setMaxSpeed(prev => Math.max(prev, speed));
+                          }
                         }
+                      }
+                      
+                      // Track max G-Force (only positive values during ascent)
+                      if (data.accelY > 0) {
+                        setMaxGForce(prev => Math.max(prev, data.accelY));
                       }
                       
                       return newData;
@@ -215,6 +227,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     setTelemetryData([]);
     setCurrentData(null);
     setCurrentSpeed(0);
+    setMaxSpeed(0);
+    setMaxGForce(0);
     // Reset flight timer state
     setFlightState('pre-flight');
     setLaunchTime(null);
@@ -298,6 +312,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     flightTime,
     flightState,
     currentSpeed,
+    maxSpeed,
+    maxGForce,
     handleConnect,
     handleDisconnect,
     sendCommand,
