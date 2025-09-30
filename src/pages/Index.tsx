@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ConnectionPanel } from "@/components/telemetry/ConnectionPanel";
 import { TelemetryGauges } from "@/components/telemetry/TelemetryGauges";
 import { AltitudeChart } from "@/components/telemetry/AltitudeChart";
@@ -15,7 +15,8 @@ import { Download, Trash2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
 const Index = () => {
-  const speakFunctionRef = useRef<((text: string) => void) | null>(null);
+  const [speakFunction, setSpeakFunction] = useState<((text: string) => void) | null>(null);
+  
   const {
     isConnected,
     connectionStatus,
@@ -34,7 +35,7 @@ const Index = () => {
     clearData,
     clearRawData,
     exportData
-  } = useSerialConnection(speakFunctionRef.current || undefined);
+  } = useSerialConnection(speakFunction || undefined); // ← ПЕРЕДАЕМ ФУНКЦИЮ КОГДА ОНА ГОТОВА
 
   const handleClearData = () => {
     if (telemetryData.length === 0) {
@@ -131,7 +132,7 @@ const Index = () => {
             {/* Voice Alerts - Moved to right column under Data Export */}
             <div className="hidden lg:block">
               <VoiceAlerts onSpeak={speakFn => {
-                speakFunctionRef.current = speakFn;
+                setSpeakFunction(() => speakFn); // ← СОХРАНЯЕМ ФУНКЦИЮ В STATE
               }} />
             </div>
           </div>
@@ -140,7 +141,7 @@ const Index = () => {
         {/* Voice Alerts - Mobile Only */}
         <div className="lg:hidden">
           <VoiceAlerts onSpeak={speakFn => {
-            speakFunctionRef.current = speakFn;
+            setSpeakFunction(() => speakFn); // ← СОХРАНЯЕМ ФУНКЦИЮ В STATE
           }} />
         </div>
 
