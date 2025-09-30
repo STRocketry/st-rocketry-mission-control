@@ -28,8 +28,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const maxAltitudeAnnouncedRef = useRef(false);
   const maxAltitudeRef = useRef(0);
   
-  // ДОБАВЛЕНО: Ref для хранения timeout ID
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Флаг для отслеживания того, что мы уже обработали парашют
+  const parachuteProcessingRef = useRef(false);
 
   const handleConnect = useCallback(async (port: any) => {
     try {
@@ -133,6 +133,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                     console.log('🔊 Checking parachute voice alert...');
                     console.log('   - speakFunction exists:', !!speakFunction);
                     console.log('   - parachuteAnnouncedRef.current:', parachuteAnnouncedRef.current);
+                    console.log('   - parachuteProcessingRef.current:', parachuteProcessingRef.current);
                     console.log('   - data.statusFlags:', data.statusFlags);
                     console.log('   - maxAltitudeRef.current:', maxAltitudeRef.current);
                     
@@ -141,28 +142,26 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                       console.log('   - Parsed flags:', flags);
                       console.log('   - parachuteDeployed:', flags.parachuteDeployed);
                       
-                      if (flags.parachuteDeployed && !parachuteAnnouncedRef.current) {
-                        console.log('🎉 PARACHUTE DEPLOYED - Triggering voice alert!');
+                      // ИСПРАВЛЕНИЕ: Обрабатываем парашют только ОДИН раз
+                      if (flags.parachuteDeployed && !parachuteProcessingRef.current) {
+                        console.log('🎉 PARACHUTE DEPLOYED - Starting voice sequence!');
                         
-                        // Озвучиваем парашют сразу
+                        // Устанавливаем флаг, что начали обработку парашюта
+                        parachuteProcessingRef.current = true;
+                        
+                        // 1. Озвучиваем парашют сразу
+                        console.log('🔊 Speaking parachute deployed');
                         speakFunction("parachute successfully deployed");
                         
-                        console.log('⏰ Scheduling max altitude announcement...');
-                        console.log('   - Current max altitude from ref:', maxAltitudeRef.current);
-                        console.log('   - maxAltitudeAnnouncedRef.current:', maxAltitudeAnnouncedRef.current);
+                        // 2. Через 2 секунды озвучиваем максимальную высоту
+                        console.log('⏰ Scheduling max altitude announcement in 2 seconds...');
+                        console.log('   - Current max altitude:', maxAltitudeRef.current);
                         
-                        // ДОБАВЛЕНО: Очищаем предыдущий timeout если есть
-                        if (timeoutRef.current) {
-                          clearTimeout(timeoutRef.current);
-                        }
-                        
-                        // ИСПРАВЛЕНИЕ: Создаем новый timeout
-                        timeoutRef.current = setTimeout(() => {
-                          console.log('🕐 Timeout executed - checking max altitude...');
-                          console.log('   - maxAltitudeRef.current in timeout:', maxAltitudeRef.current);
-                          console.log('   - maxAltitudeAnnouncedRef.current in timeout:', maxAltitudeAnnouncedRef.current);
+                        setTimeout(() => {
+                          console.log('🕐 Max altitude timeout executed');
+                          console.log('   - maxAltitudeRef.current:', maxAltitudeRef.current);
                           
-                          if (maxAltitudeRef.current > 0 && !maxAltitudeAnnouncedRef.current) {
+                          if (maxAltitudeRef.current > 0) {
                             const roundedAltitude = Math.round(maxAltitudeRef.current * 10) / 10;
                             console.log(`📢 Speaking max altitude: ${roundedAltitude}m`);
                             speakFunction(`maximum altitude is ${roundedAltitude} meters`);
@@ -170,21 +169,16 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                             maxAltitudeAnnouncedRef.current = true;
                             console.log(`✅ Max altitude announced: ${roundedAltitude}m`);
                           } else {
-                            console.log('❌ Max altitude not announced because:', {
-                              maxAltitude: maxAltitudeRef.current,
-                              maxAltitudeAnnounced: maxAltitudeAnnouncedRef.current
-                            });
+                            console.log('❌ Max altitude is 0, not announcing');
                           }
-                          
-                          // Очищаем ref после выполнения
-                          timeoutRef.current = null;
                         }, 2000);
                         
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;
-                        console.log('✅ Voice alert triggered and state updated');
-                      } else if (flags.parachuteDeployed) {
-                        console.log('⚠️ Parachute deployed but already announced');
+                        console.log('✅ Voice sequence started');
+                        
+                      } else if (flags.parachuteDeployed && parachuteProcessingRef.current) {
+                        console.log('⚠️ Parachute already processed - ignoring duplicate packets');
                       } else {
                         console.log('❌ Parachute not deployed in this packet');
                       }
@@ -224,15 +218,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     });
   }, [telemetryData]);
 
-  // ДОБАВЛЕНО: Очистка timeout при размонтировании
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   const sendCommand = useCallback(async (command: string, count: number = 1, intervalMs: number = 100) => {
     if (!portRef.current || !isConnected) {
       toast.error("Not connected to serial port");
@@ -261,12 +246,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const handleDisconnect = useCallback(async () => {
     try {
       console.log('🔌 Disconnecting...');
-      
-      // ДОБАВЛЕНО: Очищаем timeout при отключении
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
       
       if (readerRef.current) {
         await readerRef.current.cancel();
@@ -299,12 +278,6 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const clearData = useCallback(() => {
     console.log('🗑️ Clearing all data and resetting states');
     
-    // ДОБАВЛЕНО: Очищаем timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    
     setTelemetryData([]);
     setCurrentData(null);
     setCurrentSpeed(0);
@@ -318,6 +291,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     parachuteAnnouncedRef.current = false;
     maxAltitudeAnnouncedRef.current = false;
     maxAltitudeRef.current = 0;
+    parachuteProcessingRef.current = false; // Сбрасываем флаг обработки
     console.log('✅ All states reset');
   }, []);
 
