@@ -4,7 +4,7 @@ import { TelemetryData, parseStatusFlags } from "@/types/telemetry";
 
 interface SystemStatusPanelProps {
   data: TelemetryData | null;
-  textMessages: string[];
+  textMessages: Array<{ text: string; timestamp: number }>;
 }
 
 export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps) => {
@@ -27,8 +27,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   // Sensor status logic based on text messages
   const getSensorStatus = (sensorName: string) => {
-    const hasSystemReady = textMessages.some(msg => msg.includes("SYSTEM: READY"));
-    const hasError = textMessages.some(msg => msg.includes(`ERR:${sensorName}_INIT`));
+    const hasSystemReady = textMessages.some(msg => msg.text.includes("SYSTEM: READY"));
+    const hasError = textMessages.some(msg => msg.text.includes(`ERR:${sensorName}_INIT`));
     
     if (hasError) return { variant: "destructive" as const, text: "ERROR" };
     if (hasSystemReady) return { variant: "default" as const, text: "OK" };
@@ -37,8 +37,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   // System status logic based on text messages
   const getSystemStatus = () => {
-    const hasSystemReady = textMessages.some(msg => msg.includes("SYSTEM: READY"));
-    const hasError = textMessages.some(msg => msg.includes("ERR:"));
+    const hasSystemReady = textMessages.some(msg => msg.text.includes("SYSTEM: READY"));
+    const hasError = textMessages.some(msg => msg.text.includes("ERR:"));
     
     if (hasError) return { variant: "destructive" as const, text: "ERROR" };
     if (hasSystemReady) return { variant: "default" as const, text: "READY" };
@@ -47,8 +47,8 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   // EEPROM status logic based on text messages
   const getEepromStatus = () => {
-    const isDisabled = textMessages.some(msg => msg.includes("EEPROM: Disabled"));
-    const isInitialized = textMessages.some(msg => msg.includes("EEPROM: Initialized"));
+    const isDisabled = textMessages.some(msg => msg.text.includes("EEPROM: Disabled"));
+    const isInitialized = textMessages.some(msg => msg.text.includes("EEPROM: Initialized"));
     
     if (isInitialized) return { variant: "default" as const, text: "INITIALIZED" };
     if (isDisabled) return { variant: "secondary" as const, text: "DISABLED" };
@@ -57,7 +57,7 @@ export const SystemStatusPanel = ({ data, textMessages }: SystemStatusPanelProps
 
   // CALIB status logic based on calibration messages
   const getCalibStatus = () => {
-    const hasCalibData = textMessages.some(msg => msg.includes("CALIB:"));
+    const hasCalibData = textMessages.some(msg => msg.text.includes("CALIB:"));
     
     if (hasCalibData) return { variant: "default" as const, text: "OK" };
     return { variant: "secondary" as const, text: "NO DATA" };

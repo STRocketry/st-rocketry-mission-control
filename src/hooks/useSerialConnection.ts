@@ -8,7 +8,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
   const [currentData, setCurrentData] = useState<TelemetryData | null>(null);
   const [rawData, setRawData] = useState<string[]>([]);
-  const [textMessages, setTextMessages] = useState<string[]>([]);
+  const [textMessages, setTextMessages] = useState<Array<{ text: string; timestamp: number }>>([]);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   
@@ -67,7 +67,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                 
                 if (/[a-zA-Z]/.test(line) && !line.includes(',')) {
                   console.log('📝 Text message detected:', line.trim());
-                  setTextMessages(prev => [...prev, line.trim()]);
+                  setTextMessages(prev => [...prev, { text: line.trim(), timestamp: Date.now() }]);
                   toast.info(`Flight Event: ${line.trim()}`);
                   
                 } else {
@@ -328,7 +328,8 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
       
       let textMessagesSection = '';
       if (textMessages.length > 0) {
-        textMessagesSection = '\n\nFlight Events:\n' + textMessages.map((msg, idx) => `${idx + 1},${msg}`).join('\n');
+        textMessagesSection = '\n\nFlight Events:\nIndex,Time (ms),Event\n' + 
+          textMessages.map((msg, idx) => `${idx + 1},${msg.timestamp},${msg.text}`).join('\n');
       }
       
       content = headers + rows + textMessagesSection;

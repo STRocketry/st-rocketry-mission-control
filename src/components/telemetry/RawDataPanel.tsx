@@ -7,7 +7,7 @@ import { Terminal, Trash2 } from "lucide-react";
 
 interface RawDataPanelProps {
   rawData: string[];
-  textMessages: string[];
+  textMessages: Array<{ text: string; timestamp: number }>;
   isLive: boolean;
   onClearData: () => void;
 }
@@ -73,10 +73,15 @@ export const RawDataPanel = ({
                 className="flex items-center gap-2 p-2 rounded bg-mission-warning/20 border border-mission-warning/30"
               >
                 <Badge variant="outline" className="text-xs">
-                  {formatTimestamp(index)}
+                  {new Date(message.timestamp).toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
                 </Badge>
                 <span className="font-mono text-sm text-mission-warning">
-                  {message}
+                  {message.text}
                 </span>
               </div>
             ))}
