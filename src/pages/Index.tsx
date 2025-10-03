@@ -42,8 +42,6 @@ const Index = () => {
     maxAltitude,
     flightTime,
     currentSpeed,
-    maxSpeed,
-    maxGForce,
     handleConnect,
     handleDisconnect,
     sendCommand,
@@ -97,8 +95,6 @@ const Index = () => {
               data={currentData} 
               isLive={isConnected && connectionStatus === 'connected'} 
               currentSpeed={currentSpeed}
-              maxSpeed={maxSpeed}
-              maxGForce={maxGForce}
             />
 
             {/* Altitude Chart */}

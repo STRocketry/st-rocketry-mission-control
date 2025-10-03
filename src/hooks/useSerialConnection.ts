@@ -312,11 +312,26 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
     let extension: string;
 
     if (format === 'csv') {
-      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelY,angleX,angleY,angleZ,statusFlags\n';
-      const rows = telemetryData.map(d => 
-        `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelY},${d.angleX},${d.angleY},${d.angleZ},${d.statusFlags}`
-      ).join('\n');
-      content = headers + rows;
+      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelY,angleX,angleY,angleZ,statusFlags,speed_m_s\n';
+      const rows = telemetryData.map((d, index) => {
+        let speed = 0;
+        if (index > 0) {
+          const prevPoint = telemetryData[index - 1];
+          const timeDiff = (d.time - prevPoint.time) / 1000;
+          const altitudeDiff = d.altitude - prevPoint.altitude;
+          if (timeDiff > 0) {
+            speed = Math.abs(altitudeDiff / timeDiff);
+          }
+        }
+        return `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelY},${d.angleX},${d.angleY},${d.angleZ},${d.statusFlags},${speed.toFixed(2)}`;
+      }).join('\n');
+      
+      let textMessagesSection = '';
+      if (textMessages.length > 0) {
+        textMessagesSection = '\n\nFlight Events:\n' + textMessages.map((msg, idx) => `${idx + 1},${msg}`).join('\n');
+      }
+      
+      content = headers + rows + textMessagesSection;
       mimeType = 'text/csv';
       extension = 'csv';
     } else {
@@ -325,6 +340,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
         dataPoints: telemetryData.length,
         maxAltitude: Math.max(...telemetryData.map(d => d.maxAltitude)),
         flightDuration: telemetryData[telemetryData.length - 1]?.time || 0,
+        textMessages,
         telemetryData
       }, null, 2);
       mimeType = 'application/json';
