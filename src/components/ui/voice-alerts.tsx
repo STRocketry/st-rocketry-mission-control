@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 
 interface VoiceAlertsProps {
-  onSpeak: (speakFn: (text: string) => void) => void;
+  onSpeak: (speakFn: (text: string) => Promise<void>) => void;
 }
 
 export const VoiceAlerts = ({ onSpeak }: VoiceAlertsProps) => {
@@ -19,24 +19,38 @@ export const VoiceAlerts = ({ onSpeak }: VoiceAlertsProps) => {
     }
   }, []);
 
-  const speak = (text: string) => {
-    if (!isEnabled || !synthRef.current) return;
+  const speak = (text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!isEnabled || !synthRef.current) {
+        resolve();
+        return;
+      }
 
-    synthRef.current.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.volume = volume[0];
-    utterance.rate = 0.9;
-    utterance.pitch = 1.1;
+      synthRef.current.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.volume = volume[0];
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
 
-    const voices = synthRef.current.getVoices();
-    const femaleVoice = voices.find(voice => 
-      voice.name.toLowerCase().includes('female') ||
-      voice.name.toLowerCase().includes('zira') ||
-      (voice.lang.includes('en-US') && voice.name.toLowerCase().includes('samantha'))
-    ) || voices.find(voice => voice.lang.includes('en-US'));
+      const voices = synthRef.current.getVoices();
+      const femaleVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('female') ||
+        voice.name.toLowerCase().includes('zira') ||
+        (voice.lang.includes('en-US') && voice.name.toLowerCase().includes('samantha'))
+      ) || voices.find(voice => voice.lang.includes('en-US'));
 
-    if (femaleVoice) utterance.voice = femaleVoice;
-    synthRef.current.speak(utterance);
+      if (femaleVoice) utterance.voice = femaleVoice;
+      
+      utterance.onend = () => {
+        resolve();
+      };
+      
+      utterance.onerror = () => {
+        resolve();
+      };
+      
+      synthRef.current.speak(utterance);
+    });
   };
 
   useEffect(() => {

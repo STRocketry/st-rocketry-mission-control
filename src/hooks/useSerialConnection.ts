@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { TelemetryData, ConnectionStatus, parseTelemetryPacket, parseStatusFlags } from '@/types/telemetry';
 import { toast } from 'sonner';
 
-export const useSerialConnection = (speakFunction?: (text: string) => void) => {
+export const useSerialConnection = (speakFunction?: (text: string) => Promise<void>) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [telemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
@@ -151,27 +151,30 @@ export const useSerialConnection = (speakFunction?: (text: string) => void) => {
                         
                         // 1. Озвучиваем парашют сразу
                         console.log('🔊 Speaking parachute deployed');
-                        speakFunction("parachute successfully deployed");
                         
-                        // 2. Через 2 секунды озвучиваем максимальную высоту
-                        console.log('⏰ Scheduling max altitude announcement in 2 seconds...');
-                        console.log('   - Current max altitude:', maxAltitudeRef.current);
-                        
-                        setTimeout(() => {
-                          console.log('🕐 Max altitude timeout executed');
+                        // Use async IIFE to properly await speech completion
+                        (async () => {
+                          await speakFunction("parachute successfully deployed");
+                          console.log('✅ First announcement completed');
+                          
+                          // 2. Wait 2 seconds after first announcement completes
+                          console.log('⏰ Waiting 2 seconds before max altitude announcement...');
+                          await new Promise(resolve => setTimeout(resolve, 2000));
+                          
+                          console.log('🕐 Starting max altitude announcement');
                           console.log('   - maxAltitudeRef.current:', maxAltitudeRef.current);
                           
                           if (maxAltitudeRef.current > 0) {
                             const roundedAltitude = Math.round(maxAltitudeRef.current * 10) / 10;
                             console.log(`📢 Speaking max altitude: ${roundedAltitude}m`);
-                            speakFunction(`maximum altitude is ${roundedAltitude} meters`);
+                            await speakFunction(`maximum altitude is ${roundedAltitude} meters`);
                             setMaxAltitudeAnnounced(true);
                             maxAltitudeAnnouncedRef.current = true;
                             console.log(`✅ Max altitude announced: ${roundedAltitude}m`);
                           } else {
                             console.log('❌ Max altitude is 0, not announcing');
                           }
-                        }, 2000);
+                        })();
                         
                         setParachuteAnnounced(true);
                         parachuteAnnouncedRef.current = true;

@@ -16,17 +16,22 @@ import { toast } from "sonner";
 
 const Index = () => {
   // СОЗДАЕМ ФУНКЦИЮ SPEAK СРАЗУ, не ждем VoiceAlerts
-  const [speakFunction, setSpeakFunction] = useState<((text: string) => void) | null>(() => {
+  const [speakFunction, setSpeakFunction] = useState<((text: string) => Promise<void>) | null>(() => {
     if ('speechSynthesis' in window) {
-      return (text: string) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.volume = 0.8;
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
-        
-        speechSynthesis.cancel();
-        speechSynthesis.speak(utterance);
-        console.log('🔊 Speaking (immediate):', text);
+      return (text: string): Promise<void> => {
+        return new Promise((resolve) => {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.volume = 0.8;
+          utterance.rate = 0.9;
+          utterance.pitch = 1.1;
+          
+          utterance.onend = () => resolve();
+          utterance.onerror = () => resolve();
+          
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterance);
+          console.log('🔊 Speaking (immediate):', text);
+        });
       };
     }
     return null;
@@ -51,7 +56,7 @@ const Index = () => {
   } = useSerialConnection(speakFunction || undefined);
 
   // ОБНОВЛЯЕМ функцию когда VoiceAlerts готов (для настроек голоса)
-  const handleVoiceAlertsReady = useRef((speakFn: (text: string) => void) => {
+  const handleVoiceAlertsReady = useRef((speakFn: (text: string) => Promise<void>) => {
     setSpeakFunction(() => speakFn);
     console.log('🔊 VoiceAlerts function updated');
   }).current;
