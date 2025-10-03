@@ -327,6 +327,18 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               activeDot={{ r: 3, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
             />
             
+            {/* Max Altitude Line */}
+            <Line 
+              yAxisId="altitude"
+              type="monotone" 
+              dataKey="maxAltitude" 
+              stroke="hsl(var(--mission-warning))" 
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={false}
+              activeDot={{ r: 3, stroke: 'hsl(var(--mission-warning))', strokeWidth: 2 }}
+            />
+            
             {/* Acceleration Line */}
             {showAcceleration && (
               <Line 
