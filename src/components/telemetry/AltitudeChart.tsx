@@ -21,7 +21,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // Логируем входные пропсы
+  // Логируем входные параметры
   useEffect(() => {
     console.log("🔍 [AltitudeChart] Props received:", {
       apogeeLineAltitude,
@@ -30,6 +30,26 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
       isLive
     });
   }, [apogeeLineAltitude, data.length, maxAltitude, isLive]);
+
+  // Calculate Y-axis domain based on scale and auto-scale mode - ПЕРЕМЕЩЕНО ВВЕРХ!
+  const getYAxisDomain = () => {
+    if (data.length === 0) {
+      console.log("📊 [getYAxisDomain] no data, returning [0, 100]");
+      return [0, 100];
+    }
+    
+    if (isAutoScaled) {
+      const maxAlt = Math.max(...data.map(d => d.altitude));
+      const roundedMax = Math.ceil(maxAlt / 50) * 50;
+      const result = [0, Math.max(roundedMax, 100)];
+      console.log("📊 [getYAxisDomain] auto-scaled", { maxAlt, roundedMax, result });
+      return result;
+    } else {
+      const result = [0, yAxisScale];
+      console.log("📊 [getYAxisDomain] fixed scale", { yAxisScale, result });
+      return result;
+    }
+  };
 
   // Safe apogee calculation with empty array handling
   const apogee = useMemo(() => {
@@ -174,26 +194,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
     }
   }, [parachuteDeploymentData, chartData]);
 
-  // Calculate Y-axis domain based on scale and auto-scale mode
-  const getYAxisDomain = () => {
-    if (data.length === 0) {
-      console.log("📊 [getYAxisDomain] no data, returning [0, 100]");
-      return [0, 100];
-    }
-    
-    if (isAutoScaled) {
-      const maxAlt = Math.max(...data.map(d => d.altitude));
-      const roundedMax = Math.ceil(maxAlt / 50) * 50;
-      const result = [0, Math.max(roundedMax, 100)];
-      console.log("📊 [getYAxisDomain] auto-scaled", { maxAlt, roundedMax, result });
-      return result;
-    } else {
-      const result = [0, yAxisScale];
-      console.log("📊 [getYAxisDomain] fixed scale", { yAxisScale, result });
-      return result;
-    }
-  };
-
   // Эффект для проверки выхода данных за пределы масштаба
   useEffect(() => {
     if (data.length === 0 || isAutoScaled) return;
@@ -305,7 +305,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
           )}
           {apogeeLineAltitude && (
             <Badge variant="outline" className="text-xs bg-mission-warning/20">
-              APOGEE DETECTED
+              APOGEE DETECTED: {apogeeLineAltitude.toFixed(1)}m
             </Badge>
           )}
         </div>
