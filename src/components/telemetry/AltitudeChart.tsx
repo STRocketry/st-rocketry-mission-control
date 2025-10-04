@@ -89,42 +89,20 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
     const lineAltitude = apogeeLineAltitude ?? null;
     console.log("📊 [maxAltitudeLinePosition] lineAltitude:", lineAltitude);
     
-    // Детальная проверка условий
-    if (!lineAltitude) {
-      console.log("❌ [maxAltitudeLinePosition] lineAltitude is null/undefined");
-      return null;
-    }
-    
-    if (data.length === 0) {
-      console.log("❌ [maxAltitudeLinePosition] data is empty");
-      return null;
-    }
-    
-    if (typeof lineAltitude !== 'number') {
-      console.log("❌ [maxAltitudeLinePosition] lineAltitude is not a number:", typeof lineAltitude);
-      return null;
-    }
-    
-    if (lineAltitude <= 0) {
-      console.log("❌ [maxAltitudeLinePosition] lineAltitude is <= 0:", lineAltitude);
+    if (!lineAltitude || data.length === 0) {
+      console.log("❌ [maxAltitudeLinePosition] RETURN NULL - no lineAltitude or no data");
       return null;
     }
     
     try {
-      console.log("🔧 [maxAltitudeLinePosition] Calling getYAxisDomain...");
       const [yMin, yMax] = getYAxisDomain();
       console.log("📈 [maxAltitudeLinePosition] Y Axis Domain:", { yMin, yMax });
       
       const altitudeRange = yMax - yMin;
       console.log("📏 [maxAltitudeLinePosition] Altitude Range:", altitudeRange);
       
-      if (!isFinite(altitudeRange)) {
-        console.log("❌ [maxAltitudeLinePosition] altitudeRange is not finite");
-        return null;
-      }
-      
-      if (altitudeRange <= 0) {
-        console.log("❌ [maxAltitudeLinePosition] altitudeRange <= 0");
+      if (!isFinite(altitudeRange) || altitudeRange <= 0) {
+        console.log("❌ [maxAltitudeLinePosition] RETURN NULL - invalid altitude range");
         return null;
       }
 
@@ -287,9 +265,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
       showMaxAltitudeLine: !!maxAltitudeLinePosition,
       maxAltitudeLinePosition,
       showParachuteLine: !!parachuteLinePosition,
-      chartDataLength: chartData.length,
-      apogeeLineAltitude,
-      dataLength: data.length
+      chartDataLength: chartData.length
     });
   });
 
@@ -462,10 +438,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
         </ResponsiveContainer>
 
         {/* Max Altitude Horizontal Line Overlay */}
-        {maxAltitudeLinePosition ? (
+        {maxAltitudeLinePosition && (
           <div className="absolute inset-0 pointer-events-none" style={{ paddingTop: '5px', paddingBottom: '5px' }}>
-            {/* Красная рамка для отладки */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '2px solid red', pointerEvents: 'none' }}></div>
             <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
               {/* Horizontal dashed line at max altitude */}
               <line
@@ -506,10 +480,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
                 </text>
               </g>
             </svg>
-          </div>
-        ) : (
-          <div style={{ position: 'absolute', top: 10, left: 10, background: 'red', color: 'white', padding: '5px', zIndex: 1000 }}>
-            No maxAltitudeLinePosition: apogeeLineAltitude={apogeeLineAltitude}, data.length={data.length}
           </div>
         )}
 
