@@ -20,17 +20,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // Memoized chart data for better performance
-  const chartData = useMemo(() => 
-    data.map(d => ({
-      time: d.time / 1000,
-      altitude: d.altitude,
-      maxAltitude: d.maxAltitude,
-      accelY: d.accelY
-    })),
-    [data]
-  );
-
   // Safe apogee calculation with empty array handling
   const apogee = useMemo(() => {
     if (data.length === 0) return null;
@@ -39,6 +28,46 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       data[0]
     );
   }, [data]);
+
+  // Find the index where apogee is reached
+  const apogeeIndex = useMemo(() => {
+    if (!apogee || data.length === 0) return -1;
+    return data.findIndex(d => d.time === apogee.time && d.altitude === apogee.altitude);
+  }, [apogee, data]);
+
+  // Memoized chart data for better performance
+  const chartData = useMemo(() => 
+    data.map((d, index) => ({
+      time: d.time / 1000,
+      altitude: d.altitude,
+      // Only show maxAltitude line after apogee is reached
+      maxAltitude: apogeeIndex >= 0 && index >= apogeeIndex ? d.maxAltitude : null,
+      accelY: d.accelY
+    })),
+    [data, apogeeIndex]
+  );
+
+  // Calculate position for max altitude label
+  const maxAltitudePosition = useMemo(() => {
+    if (!apogee || apogeeIndex < 0 || !chartData.length) return null;
+    
+    try {
+      const timeValues = chartData.map(d => d.time);
+      const minTime = Math.min(...timeValues);
+      const maxTime = Math.max(...timeValues);
+      
+      const apogeeTime = apogee.time / 1000;
+      const position = (apogeeTime - minTime) / (maxTime - minTime);
+      
+      return {
+        position: Math.max(0, Math.min(1, position)),
+        altitude: apogee.altitude
+      };
+    } catch (error) {
+      console.error('Error calculating max altitude position:', error);
+      return null;
+    }
+  }, [apogee, apogeeIndex, chartData]);
 
   // Find parachute deployment - SIMPLE VERSION
   const parachuteDeploymentData = useMemo(() => {
@@ -353,6 +382,41 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
             )}
           </LineChart>
         </ResponsiveContainer>
+
+        {/* Max Altitude Label Overlay */}
+        {maxAltitudePosition && (
+          <div className="absolute inset-0 pointer-events-none">
+            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+              {/* Label with background at max altitude point */}
+              <g transform={`translate(${Math.min(maxAltitudePosition.position * 100 + 10, 80)} 40)`}>
+                {/* Background rectangle */}
+                <rect
+                  x="-5"
+                  y="-12"
+                  width="90"
+                  height="20"
+                  rx="4"
+                  fill="hsl(var(--background))"
+                  fillOpacity="0.95"
+                  stroke="hsl(var(--mission-warning))"
+                  strokeWidth="1.5"
+                />
+                
+                {/* Text content */}
+                <text
+                  x="0"
+                  y="2"
+                  fill="hsl(var(--mission-warning))"
+                  fontSize="12"
+                  fontWeight="bold"
+                  className="font-mono"
+                >
+                  {maxAltitudePosition.altitude.toFixed(1)} meters
+                </text>
+              </g>
+            </svg>
+          </div>
+        )}
 
         {/* Parachute Line Overlay */}
         {parachuteLinePosition && (
