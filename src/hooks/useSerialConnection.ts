@@ -315,7 +315,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
     let extension: string;
 
     if (format === 'csv') {
-      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelY,angleX,angleY,angleZ,statusFlags,speed_m_s\n';
+      const headers = 'time,altitude,maxAltitude,temperature,voltage,accelY,angleX,angleY,angleZ,speed_m_s,statusFlags\n';
       const rows = telemetryData.map((d, index) => {
         let speed = 0;
         if (index > 0) {
@@ -326,7 +326,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
             speed = Math.abs(altitudeDiff / timeDiff);
           }
         }
-        return `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelY},${d.angleX},${d.angleY},${d.angleZ},${d.statusFlags},${speed.toFixed(2)}`;
+        return `${d.time},${d.altitude},${d.maxAltitude},${d.temperature},${d.voltage},${d.accelY},${d.angleX},${d.angleY},${d.angleZ},${speed.toFixed(2)},${d.statusFlags}`;
       }).join('\n');
       
       let textMessagesSection = '';
