@@ -37,37 +37,34 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
 
   // Memoized chart data for better performance
   const chartData = useMemo(() => 
-    data.map((d, index) => ({
+    data.map((d) => ({
       time: d.time / 1000,
       altitude: d.altitude,
-      // Only show maxAltitude line after apogee is reached
-      maxAltitude: apogeeIndex >= 0 && index >= apogeeIndex ? d.maxAltitude : null,
       accelY: d.accelY
     })),
-    [data, apogeeIndex]
+    [data]
   );
 
-  // Calculate position for max altitude label
-  const maxAltitudePosition = useMemo(() => {
-    if (!apogee || apogeeIndex < 0 || !chartData.length) return null;
+  // Calculate Y position for max altitude horizontal line
+  const maxAltitudeLinePosition = useMemo(() => {
+    if (!apogee || apogeeIndex < 0 || data.length === 0) return null;
     
     try {
-      const timeValues = chartData.map(d => d.time);
-      const minTime = Math.min(...timeValues);
-      const maxTime = Math.max(...timeValues);
+      const [yMin, yMax] = getYAxisDomain();
+      const altitudeRange = yMax - yMin;
       
-      const apogeeTime = apogee.time / 1000;
-      const position = (apogeeTime - minTime) / (maxTime - minTime);
+      // Calculate position from bottom (0 = bottom, 1 = top)
+      const position = (apogee.altitude - yMin) / altitudeRange;
       
       return {
-        position: Math.max(0, Math.min(1, position)),
+        position: Math.max(0, Math.min(1, 1 - position)), // Invert because SVG Y goes top to bottom
         altitude: apogee.altitude
       };
     } catch (error) {
       console.error('Error calculating max altitude position:', error);
       return null;
     }
-  }, [apogee, apogeeIndex, chartData]);
+  }, [apogee, apogeeIndex, data, yAxisScale, isAutoScaled]);
 
   // Find parachute deployment - SIMPLE VERSION
   const parachuteDeploymentData = useMemo(() => {
@@ -356,18 +353,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
               activeDot={{ r: 3, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
             />
             
-            {/* Max Altitude Line */}
-            <Line 
-              yAxisId="altitude"
-              type="monotone" 
-              dataKey="maxAltitude" 
-              stroke="hsl(var(--mission-warning))" 
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={false}
-              activeDot={{ r: 3, stroke: 'hsl(var(--mission-warning))', strokeWidth: 2 }}
-            />
-            
             {/* Acceleration Line */}
             {showAcceleration && (
               <Line 
@@ -383,17 +368,28 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
           </LineChart>
         </ResponsiveContainer>
 
-        {/* Max Altitude Label Overlay */}
-        {maxAltitudePosition && (
-          <div className="absolute inset-0 pointer-events-none">
+        {/* Max Altitude Horizontal Line Overlay */}
+        {maxAltitudeLinePosition && (
+          <div className="absolute inset-0 pointer-events-none" style={{ paddingTop: '5px', paddingBottom: '5px' }}>
             <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
-              {/* Label with background at max altitude point */}
-              <g transform={`translate(${Math.min(maxAltitudePosition.position * 100 + 10, 80)} 40)`}>
+              {/* Horizontal dashed line at max altitude */}
+              <line
+                x1="0%"
+                x2="100%"
+                y1={`${maxAltitudeLinePosition.position * 100}%`}
+                y2={`${maxAltitudeLinePosition.position * 100}%`}
+                stroke="hsl(var(--mission-warning))"
+                strokeDasharray="5 5"
+                strokeWidth={2}
+              />
+              
+              {/* Label with background */}
+              <g transform={`translate(10, ${maxAltitudeLinePosition.position * 100 - 15})`}>
                 {/* Background rectangle */}
                 <rect
                   x="-5"
-                  y="-12"
-                  width="90"
+                  y="-5"
+                  width="100"
                   height="20"
                   rx="4"
                   fill="hsl(var(--background))"
@@ -405,13 +401,13 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
                 {/* Text content */}
                 <text
                   x="0"
-                  y="2"
+                  y="9"
                   fill="hsl(var(--mission-warning))"
                   fontSize="12"
                   fontWeight="bold"
                   className="font-mono"
                 >
-                  {maxAltitudePosition.altitude.toFixed(1)} meters
+                  {maxAltitudeLinePosition.altitude.toFixed(1)} meters
                 </text>
               </g>
             </svg>
