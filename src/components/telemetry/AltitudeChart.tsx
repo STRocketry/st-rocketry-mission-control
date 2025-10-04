@@ -1,19 +1,25 @@
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TelemetryData } from "@/types/telemetry";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Activity, TrendingUp, RotateCcw, Eye, EyeOff, Ruler } from "lucide-react";
+
+interface AltitudeChartProps {
+  data: TelemetryData[];
+  maxAltitude: number;
+  isLive: boolean;
+  apogeeLineAltitude?: number | null;
+}
+
 export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
   const [yAxisScale, setYAxisScale] = useState<number>(5);
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
-
-  // Логируем входные параметры
-  useEffect(() => {
-    console.log("🔍 AltitudeChart Props:", {
-      apogeeLineAltitude,
-      dataLength: data.length,
-      maxAltitude,
-      isLive
-    });
-  }, [apogeeLineAltitude, data.length, maxAltitude, isLive]);
 
   // Safe apogee calculation with empty array handling
   const apogee = useMemo(() => {
@@ -40,59 +46,28 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
     [data]
   );
 
-  // Calculate Y position for max altitude horizontal line - ДОБАВИМ ЛОГИ ЗДЕСЬ
+  // Calculate Y position for max altitude horizontal line
   const maxAltitudeLinePosition = useMemo(() => {
-    console.log("🔄 Calculating maxAltitudeLinePosition...");
-    console.log("📥 Inputs:", {
-      apogeeLineAltitude,
-      dataLength: data.length,
-      yAxisScale,
-      isAutoScaled
-    });
-
     const lineAltitude = apogeeLineAltitude ?? null;
-    console.log("📊 lineAltitude:", lineAltitude);
-    
-    if (!lineAltitude || data.length === 0) {
-      console.log("❌ Skipping - no lineAltitude or no data");
-      return null;
-    }
+    if (!lineAltitude || data.length === 0) return null;
     
     try {
       const [yMin, yMax] = getYAxisDomain();
-      console.log("📈 Y Axis Domain:", { yMin, yMax });
-      
       const altitudeRange = yMax - yMin;
-      console.log("📏 Altitude Range:", altitudeRange);
-      
-      if (!isFinite(altitudeRange) || altitudeRange <= 0) {
-        console.log("❌ Invalid altitude range");
-        return null;
-      }
+      if (!isFinite(altitudeRange) || altitudeRange <= 0) return null;
 
       // Clamp altitude within current Y domain to avoid out-of-range positions
       const clampedAltitude = Math.min(Math.max(lineAltitude, yMin), yMax);
-      console.log("🎯 Clamped Altitude:", clampedAltitude);
 
       // Calculate position from bottom (0 = bottom, 1 = top)
       const position = (clampedAltitude - yMin) / altitudeRange;
-      const finalPosition = Math.max(0, Math.min(1, 1 - position));
       
-      console.log("📐 Calculated Position:", {
-        rawPosition: position,
-        finalPosition,
-        lineAltitude
-      });
-      
-      const result = {
-        position: finalPosition,
+      return {
+        position: Math.max(0, Math.min(1, 1 - position)), // Invert because SVG Y goes top to bottom
         altitude: lineAltitude
       };
-      
-      console.log("✅ maxAltitudeLinePosition result:", result);
-      return result;
     } catch (error) {
-      console.error('❌ Error calculating max altitude position:', error);
+      console.error('Error calculating max altitude position:', error);
       return null;
     }
   }, [apogeeLineAltitude, data, yAxisScale, isAutoScaled]);
@@ -160,21 +135,14 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
 
   // Calculate Y-axis domain based on scale and auto-scale mode
   const getYAxisDomain = () => {
-    if (data.length === 0) {
-      console.log("📊 getYAxisDomain: no data, returning [0, 100]");
-      return [0, 100];
-    }
+    if (data.length === 0) return [0, 100];
     
     if (isAutoScaled) {
       const maxAlt = Math.max(...data.map(d => d.altitude));
       const roundedMax = Math.ceil(maxAlt / 50) * 50;
-      const result = [0, Math.max(roundedMax, 100)];
-      console.log("📊 getYAxisDomain: auto-scaled", { maxAlt, roundedMax, result });
-      return result;
+      return [0, Math.max(roundedMax, 100)];
     } else {
-      const result = [0, yAxisScale];
-      console.log("📊 getYAxisDomain: fixed scale", { yAxisScale, result });
-      return result;
+      return [0, yAxisScale];
     }
   };
 
@@ -243,16 +211,6 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
     }
   };
 
-  // Логируем рендер компонента
-  useEffect(() => {
-    console.log("🎯 Component Render State:", {
-      showMaxAltitudeLine: !!maxAltitudeLinePosition,
-      maxAltitudeLinePosition,
-      showParachuteLine: !!parachuteLinePosition,
-      chartDataLength: chartData.length
-    });
-  });
-
   return (
     <Card className="p-4 lg:p-6 bg-card/50 backdrop-blur-sm border-primary/20">
       {/* Header */}
@@ -289,7 +247,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
           )}
           {apogeeLineAltitude && (
             <Badge variant="outline" className="text-xs bg-mission-warning/20">
-              APOGEE DETECTED: {apogeeLineAltitude.toFixed(1)}m
+              APOGEE DETECTED
             </Badge>
           )}
         </div>
