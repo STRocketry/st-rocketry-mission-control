@@ -47,14 +47,18 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
 
   // Calculate Y position for max altitude horizontal line
   const maxAltitudeLinePosition = useMemo(() => {
-    if (!apogee || apogeeIndex < 0 || data.length === 0) return null;
+    if (!apogee || data.length === 0) return null;
     
     try {
       const [yMin, yMax] = getYAxisDomain();
       const altitudeRange = yMax - yMin;
-      
+      if (!isFinite(altitudeRange) || altitudeRange <= 0) return null;
+
+      // Clamp altitude within current Y domain to avoid out-of-range positions
+      const clampedAltitude = Math.min(Math.max(apogee.altitude, yMin), yMax);
+
       // Calculate position from bottom (0 = bottom, 1 = top)
-      const position = (apogee.altitude - yMin) / altitudeRange;
+      const position = (clampedAltitude - yMin) / altitudeRange;
       
       return {
         position: Math.max(0, Math.min(1, 1 - position)), // Invert because SVG Y goes top to bottom
@@ -64,7 +68,7 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       console.error('Error calculating max altitude position:', error);
       return null;
     }
-  }, [apogee, apogeeIndex, data, yAxisScale, isAutoScaled]);
+  }, [apogee, data, yAxisScale, isAutoScaled]);
 
   // Find parachute deployment - SIMPLE VERSION
   const parachuteDeploymentData = useMemo(() => {
