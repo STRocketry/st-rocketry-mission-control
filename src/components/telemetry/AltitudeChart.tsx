@@ -21,6 +21,16 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
   const [isAutoScaled, setIsAutoScaled] = useState<boolean>(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  // Логируем входные пропсы
+  useEffect(() => {
+    console.log("🔍 [AltitudeChart] Props received:", {
+      apogeeLineAltitude,
+      dataLength: data.length,
+      maxAltitude,
+      isLive
+    });
+  }, [apogeeLineAltitude, data.length, maxAltitude, isLive]);
+
   // Safe apogee calculation with empty array handling
   const apogee = useMemo(() => {
     if (data.length === 0) return null;
@@ -48,26 +58,57 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
 
   // Calculate Y position for max altitude horizontal line
   const maxAltitudeLinePosition = useMemo(() => {
+    console.log("🔄 [maxAltitudeLinePosition] Calculation started");
+    console.log("📥 [maxAltitudeLinePosition] Inputs:", {
+      apogeeLineAltitude,
+      dataLength: data.length,
+      yAxisScale,
+      isAutoScaled
+    });
+
     const lineAltitude = apogeeLineAltitude ?? null;
-    if (!lineAltitude || data.length === 0) return null;
+    console.log("📊 [maxAltitudeLinePosition] lineAltitude:", lineAltitude);
+    
+    if (!lineAltitude || data.length === 0) {
+      console.log("❌ [maxAltitudeLinePosition] RETURN NULL - no lineAltitude or no data");
+      return null;
+    }
     
     try {
       const [yMin, yMax] = getYAxisDomain();
+      console.log("📈 [maxAltitudeLinePosition] Y Axis Domain:", { yMin, yMax });
+      
       const altitudeRange = yMax - yMin;
-      if (!isFinite(altitudeRange) || altitudeRange <= 0) return null;
+      console.log("📏 [maxAltitudeLinePosition] Altitude Range:", altitudeRange);
+      
+      if (!isFinite(altitudeRange) || altitudeRange <= 0) {
+        console.log("❌ [maxAltitudeLinePosition] RETURN NULL - invalid altitude range");
+        return null;
+      }
 
       // Clamp altitude within current Y domain to avoid out-of-range positions
       const clampedAltitude = Math.min(Math.max(lineAltitude, yMin), yMax);
+      console.log("🎯 [maxAltitudeLinePosition] Clamped Altitude:", clampedAltitude);
 
       // Calculate position from bottom (0 = bottom, 1 = top)
       const position = (clampedAltitude - yMin) / altitudeRange;
+      const finalPosition = Math.max(0, Math.min(1, 1 - position));
       
-      return {
-        position: Math.max(0, Math.min(1, 1 - position)), // Invert because SVG Y goes top to bottom
+      console.log("📐 [maxAltitudeLinePosition] Position calculation:", {
+        rawPosition: position,
+        finalPosition,
+        lineAltitude
+      });
+      
+      const result = {
+        position: finalPosition,
         altitude: lineAltitude
       };
+      
+      console.log("✅ [maxAltitudeLinePosition] RETURN RESULT:", result);
+      return result;
     } catch (error) {
-      console.error('Error calculating max altitude position:', error);
+      console.error('❌ [maxAltitudeLinePosition] ERROR:', error);
       return null;
     }
   }, [apogeeLineAltitude, data, yAxisScale, isAutoScaled]);
@@ -135,14 +176,21 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
 
   // Calculate Y-axis domain based on scale and auto-scale mode
   const getYAxisDomain = () => {
-    if (data.length === 0) return [0, 100];
+    if (data.length === 0) {
+      console.log("📊 [getYAxisDomain] no data, returning [0, 100]");
+      return [0, 100];
+    }
     
     if (isAutoScaled) {
       const maxAlt = Math.max(...data.map(d => d.altitude));
       const roundedMax = Math.ceil(maxAlt / 50) * 50;
-      return [0, Math.max(roundedMax, 100)];
+      const result = [0, Math.max(roundedMax, 100)];
+      console.log("📊 [getYAxisDomain] auto-scaled", { maxAlt, roundedMax, result });
+      return result;
     } else {
-      return [0, yAxisScale];
+      const result = [0, yAxisScale];
+      console.log("📊 [getYAxisDomain] fixed scale", { yAxisScale, result });
+      return result;
     }
   };
 
@@ -210,6 +258,16 @@ export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }:
       return ticks;
     }
   };
+
+  // Логируем финальное состояние рендера
+  useEffect(() => {
+    console.log("🎯 [AltitudeChart] Render state:", {
+      showMaxAltitudeLine: !!maxAltitudeLinePosition,
+      maxAltitudeLinePosition,
+      showParachuteLine: !!parachuteLinePosition,
+      chartDataLength: chartData.length
+    });
+  });
 
   return (
     <Card className="p-4 lg:p-6 bg-card/50 backdrop-blur-sm border-primary/20">
