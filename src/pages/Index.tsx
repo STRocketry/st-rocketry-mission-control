@@ -47,6 +47,7 @@ const Index = () => {
     maxAltitude,
     flightTime,
     currentSpeed,
+    apogeeLineAltitude,
     handleConnect,
     handleDisconnect,
     sendCommand,
@@ -104,7 +105,7 @@ const Index = () => {
 
             {/* Altitude Chart */}
             <div className="w-full">
-              <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} />
+              <AltitudeChart data={telemetryData} maxAltitude={maxAltitude} isLive={isConnected && connectionStatus === 'connected'} apogeeLineAltitude={apogeeLineAltitude} />
             </div>
 
             {/* System Status Panel - Moved from right column */}

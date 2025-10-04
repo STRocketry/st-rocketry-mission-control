@@ -11,6 +11,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
   const [textMessages, setTextMessages] = useState<Array<{ text: string; timestamp: number }>>([]);
   const [maxAltitudeAnnounced, setMaxAltitudeAnnounced] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
+  const [apogeeLineAltitude, setApogeeLineAltitude] = useState<number | null>(null);
   
   const [parachuteAnnounced, setParachuteAnnounced] = useState(false);
   
@@ -69,6 +70,13 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
                   console.log('📝 Text message detected:', line.trim());
                   setTextMessages(prev => [...prev, { text: line.trim(), timestamp: Date.now() }]);
                   toast.info(`Flight Event: ${line.trim()}`);
+
+                  // Detect apogee event and capture altitude from the latest telemetry packet
+                  if (/DEPLOY:AUTO.*Apogee detected/i.test(line)) {
+                    const alt = currentData?.maxAltitude ?? maxAltitudeRef.current ?? 0;
+                    console.log('🎯 Apogee detected event received. Using altitude:', alt);
+                    setApogeeLineAltitude(alt > 0 ? alt : null);
+                  }
                   
                 } else {
                   const data = parseTelemetryPacket(line);
@@ -295,6 +303,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
     maxAltitudeAnnouncedRef.current = false;
     maxAltitudeRef.current = 0;
     parachuteProcessingRef.current = false; // Сбрасываем флаг обработки
+    setApogeeLineAltitude(null);
     console.log('✅ All states reset');
   }, []);
 
@@ -386,6 +395,7 @@ export const useSerialConnection = (speakFunction?: (text: string) => Promise<vo
     flightTime,
     flightState,
     currentSpeed,
+    apogeeLineAltitude,
     handleConnect,
     handleDisconnect,
     sendCommand,

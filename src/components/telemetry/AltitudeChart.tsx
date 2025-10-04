@@ -11,9 +11,10 @@ interface AltitudeChartProps {
   data: TelemetryData[];
   maxAltitude: number;
   isLive: boolean;
+  apogeeLineAltitude?: number | null;
 }
 
-export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps) => {
+export const AltitudeChart = ({ data, maxAltitude, isLive, apogeeLineAltitude }: AltitudeChartProps) => {
   const [showAcceleration, setShowAcceleration] = useState(false);
   const [zoomDomain, setZoomDomain] = useState<{ left: string; right: string } | null>(null);
   const [yAxisScale, setYAxisScale] = useState<number>(5);
@@ -47,7 +48,8 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
 
   // Calculate Y position for max altitude horizontal line
   const maxAltitudeLinePosition = useMemo(() => {
-    if (!apogee || data.length === 0) return null;
+    const lineAltitude = apogeeLineAltitude ?? null;
+    if (!lineAltitude || data.length === 0) return null;
     
     try {
       const [yMin, yMax] = getYAxisDomain();
@@ -55,20 +57,20 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
       if (!isFinite(altitudeRange) || altitudeRange <= 0) return null;
 
       // Clamp altitude within current Y domain to avoid out-of-range positions
-      const clampedAltitude = Math.min(Math.max(apogee.altitude, yMin), yMax);
+      const clampedAltitude = Math.min(Math.max(lineAltitude, yMin), yMax);
 
       // Calculate position from bottom (0 = bottom, 1 = top)
       const position = (clampedAltitude - yMin) / altitudeRange;
       
       return {
         position: Math.max(0, Math.min(1, 1 - position)), // Invert because SVG Y goes top to bottom
-        altitude: apogee.altitude
+        altitude: lineAltitude
       };
     } catch (error) {
       console.error('Error calculating max altitude position:', error);
       return null;
     }
-  }, [apogee, data, yAxisScale, isAutoScaled]);
+  }, [apogeeLineAltitude, data, yAxisScale, isAutoScaled]);
 
   // Find parachute deployment - SIMPLE VERSION
   const parachuteDeploymentData = useMemo(() => {
@@ -241,6 +243,11 @@ export const AltitudeChart = ({ data, maxAltitude, isLive }: AltitudeChartProps)
           {parachuteDeploymentData && (
             <Badge className="bg-mission-success text-background text-xs">
               PARACHUTE: {parachuteDeploymentData.time.toFixed(1)}s
+            </Badge>
+          )}
+          {apogeeLineAltitude && (
+            <Badge variant="outline" className="text-xs bg-mission-warning/20">
+              APOGEE DETECTED
             </Badge>
           )}
         </div>
